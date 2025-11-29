@@ -28,7 +28,8 @@
       "Bash(dir:*)",
       "Bash(cat:*)",
       "Bash(npm install:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(groups\" errors because Monarch requires ALL characters in the regex to be \ncaptured by consecutive groups (no gaps like \\b or \\s+).\n\nChanges:\n- Removed all multi-group capture rules\n- Simplified to single-token rules with case statements\n- Changed defaultToken from ''invalid'' to '''' (empty)\n- Moved Patient/Population to typeKeywords (not keywords)\n- Added fhirResources and builtinFunctions to case matching\n- Fixed comment end pattern from string to regex\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
     ],
     "deny": [],
     "ask": []

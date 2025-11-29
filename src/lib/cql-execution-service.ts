@@ -139,7 +139,13 @@ export interface CompilationWarning {
  * Uses the cqframework/cql-translation-service Docker image
  */
 export const CQL_TRANSLATOR_CONFIG = {
-  // Public CQL Translation Service (for development/testing)
+  // Multiple public CQL Translation Service endpoints (tried in order)
+  publicEndpoints: [
+    'https://cql-translation.alphora.com/cql/translator',
+    'https://cql-translation.dataphoria.org/cql/translator',
+  ],
+
+  // Primary public endpoint (for backwards compatibility)
   publicEndpoint: 'https://cql-translation.alphora.com/cql/translator',
 
   // Local Docker endpoint
@@ -156,24 +162,68 @@ export const CQL_TRANSLATOR_CONFIG = {
     signatures: 'All',
     'detailed-errors': true,
   },
+
+  // Request timeout in milliseconds
+  timeout: 15000,
 };
 
 /**
  * Compile CQL to ELM using the CQL Translation Service
+ * Tries multiple endpoints with fallback on failure
  */
 export async function compileCQLToELM(
   cqlCode: string,
   translatorEndpoint?: string
 ): Promise<CompilationResult> {
-  const endpoint = translatorEndpoint || CQL_TRANSLATOR_CONFIG.publicEndpoint;
+  // If specific endpoint provided, only try that one
+  const endpoints = translatorEndpoint
+    ? [translatorEndpoint]
+    : CQL_TRANSLATOR_CONFIG.publicEndpoints;
+
+  const errors: string[] = [];
+
+  // Try each endpoint in order
+  for (const endpoint of endpoints) {
+    try {
+      const result = await compileCQLToELMWithEndpoint(cqlCode, endpoint);
+      if (result.success || (result.errors && result.errors.some(e => !e.message.includes('fetch')))) {
+        // Success or CQL-specific error (not network error)
+        return result;
+      }
+      errors.push(`${endpoint}: ${result.errors?.[0]?.message || 'Unknown error'}`);
+    } catch (error) {
+      errors.push(`${endpoint}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  // All endpoints failed
+  return {
+    success: false,
+    errors: [{
+      severity: 'error',
+      message: `All translation services unavailable. Tried: ${endpoints.length} endpoint(s). Last error: ${errors[errors.length - 1]}`,
+    }],
+  };
+}
+
+/**
+ * Try to compile CQL to ELM using a specific endpoint
+ */
+async function compileCQLToELMWithEndpoint(
+  cqlCode: string,
+  endpoint: string
+): Promise<CompilationResult> {
+  // Build query string with options
+  const params = new URLSearchParams();
+  Object.entries(CQL_TRANSLATOR_CONFIG.defaultOptions).forEach(([key, value]) => {
+    params.append(key, String(value));
+  });
+
+  // Create abort controller for timeout
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), CQL_TRANSLATOR_CONFIG.timeout);
 
   try {
-    // Build query string with options
-    const params = new URLSearchParams();
-    Object.entries(CQL_TRANSLATOR_CONFIG.defaultOptions).forEach(([key, value]) => {
-      params.append(key, String(value));
-    });
-
     const response = await fetch(`${endpoint}?${params.toString()}`, {
       method: 'POST',
       headers: {
@@ -181,7 +231,10 @@ export async function compileCQLToELM(
         'Accept': 'application/elm+json',
       },
       body: cqlCode,
+      signal: controller.signal,
     });
+
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -240,6 +293,18 @@ export async function compileCQLToELM(
       warnings: warnings.length > 0 ? warnings : undefined,
     };
   } catch (error) {
+    clearTimeout(timeoutId);
+
+    if (error instanceof Error && error.name === 'AbortError') {
+      return {
+        success: false,
+        errors: [{
+          severity: 'error',
+          message: `Request timed out after ${CQL_TRANSLATOR_CONFIG.timeout / 1000}s`,
+        }],
+      };
+    }
+
     return {
       success: false,
       errors: [{
