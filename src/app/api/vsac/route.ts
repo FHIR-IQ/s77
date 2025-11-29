@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { commonValueSets } from '@/lib/cql-knowledge-base';
-import type { ClinicalDomain } from '@/types/cql';
+import type { ClinicalDomain, ValueSetReference } from '@/types/cql';
 
 // VSAC Value Set Search API
 // Provides access to common value sets and search functionality
