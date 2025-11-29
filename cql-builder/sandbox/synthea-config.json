@@ -1,0 +1,126 @@
+{
+  "name": "CQL Builder Synthea Configuration",
+  "description": "Configuration for generating synthetic patient data to test CQL measures",
+  "version": "1.0.0",
+  "synthea": {
+    "version": "3.0.0",
+    "download_url": "https://github.com/synthetichealth/synthea/releases/download/master-branch-latest/synthea-with-dependencies.jar"
+  },
+  "default_settings": {
+    "population": 1000,
+    "seed": 12345,
+    "state": "Massachusetts",
+    "city": "Boston",
+    "output_format": "fhir_r4",
+    "modules": {
+      "diabetes": true,
+      "cardiovascular": true,
+      "colorectal_cancer": true,
+      "breast_cancer": true,
+      "lung_cancer": true,
+      "copd": true,
+      "hypertension": true,
+      "depression": true,
+      "opioid_addiction": true
+    }
+  },
+  "measure_specific_configs": {
+    "diabetes_hba1c": {
+      "description": "Configuration for Diabetes HbA1c Control Measure",
+      "population": 500,
+      "age_range": {
+        "min": 18,
+        "max": 75
+      },
+      "gender": "all",
+      "conditions": ["diabetes"],
+      "expected_outcomes": {
+        "initial_population_percentage": 0.15,
+        "numerator_percentage": 0.25,
+        "notes": "~15% of adults have diabetes, ~25% have poor control (HbA1c > 9%)"
+      }
+    },
+    "colorectal_screening": {
+      "description": "Configuration for Colorectal Cancer Screening Measure",
+      "population": 500,
+      "age_range": {
+        "min": 45,
+        "max": 75
+      },
+      "gender": "all",
+      "conditions": [],
+      "expected_outcomes": {
+        "initial_population_percentage": 0.35,
+        "numerator_percentage": 0.70,
+        "notes": "~35% of adults 45-75, ~70% screening rate nationally"
+      }
+    },
+    "breast_cancer_screening": {
+      "description": "Configuration for Breast Cancer Screening Measure",
+      "population": 500,
+      "age_range": {
+        "min": 50,
+        "max": 74
+      },
+      "gender": "F",
+      "conditions": [],
+      "expected_outcomes": {
+        "initial_population_percentage": 0.20,
+        "numerator_percentage": 0.75,
+        "notes": "~20% of population are women 50-74, ~75% screening rate"
+      }
+    }
+  },
+  "commands": {
+    "generate_all": "java -jar synthea-with-dependencies.jar -p 1000 -s 12345 Massachusetts Boston",
+    "generate_diabetes": "java -jar synthea-with-dependencies.jar -p 500 -s 12345 -m diabetes Massachusetts Boston",
+    "generate_fhir_bundles": "java -jar synthea-with-dependencies.jar -p 100 --exporter.fhir.export true",
+    "help": "java -jar synthea-with-dependencies.jar --help"
+  },
+  "output_directories": {
+    "fhir": "./output/fhir",
+    "ccda": "./output/ccda",
+    "csv": "./output/csv",
+    "html": "./output/html"
+  },
+  "cql_execution": {
+    "description": "Running CQL against Synthea data",
+    "tools": [
+      {
+        "name": "CQL Execution Service",
+        "url": "https://github.com/DBCG/cql_execution_service",
+        "description": "RESTful service for CQL execution"
+      },
+      {
+        "name": "cql-exec-fhir",
+        "npm": "npm install cql-exec-fhir",
+        "description": "JavaScript CQL execution engine with FHIR support"
+      },
+      {
+        "name": "cql-evaluator",
+        "description": "Java-based CQL evaluator",
+        "url": "https://github.com/DBCG/cql-evaluator"
+      }
+    ],
+    "vscode_extension": {
+      "name": "Clinical Quality Language",
+      "id": "cqframework.cql",
+      "marketplace": "https://marketplace.visualstudio.com/items?itemName=cqframework.cql"
+    }
+  },
+  "fhir_server": {
+    "description": "HAPI FHIR Server for testing",
+    "docker_image": "hapiproject/hapi:latest",
+    "docker_run": "docker run -p 8080:8080 hapiproject/hapi:latest",
+    "url": "http://localhost:8080/fhir"
+  },
+  "testing_workflow": [
+    "1. Generate Synthea data with appropriate configuration",
+    "2. Load FHIR bundles into HAPI FHIR server",
+    "3. Open CQL file in VS Code with CQL extension",
+    "4. Configure CQL extension to point to FHIR server",
+    "5. Execute CQL against patient population",
+    "6. Review results and refine measure logic",
+    "7. Export to FHIR Measure resource for production"
+  ]
+}
