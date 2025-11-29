@@ -1,0 +1,33 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(uvx:*)",
+      "Bash(cmd /c \"uvx --from git+https://github.com/github/spec-kit.git specify init s77\")",
+      "Bash(powershell -Command \"uvx --from git+https://github.com/github/spec-kit.git specify init s77 2>&1\")",
+      "Bash(powershell -Command \"where.exe uv 2>&1; where.exe uvx 2>&1; $env:LOCALAPPDATA + ''\\uv\\uvx.exe''; Test-Path ($env:LOCALAPPDATA + ''\\uv\\uvx.exe'')\")",
+      "Bash(powershell -Command:*)",
+      "Bash(cmd /c \"dir /s /b C:\\Users\\default.LAPTOP-BOBEDDVK\\.local\\bin\\uv* 2>nul & dir /s /b %LOCALAPPDATA%\\uv\\uv* 2>nul & dir /s /b C:\\Users\\default.LAPTOP-BOBEDDVK\\AppData\\Local\\uv\\* 2>nul\")",
+      "Bash(cmd /c \"chcp 65001 >nul && set PYTHONIOENCODING=utf-8 && C:\\Users\\default.LAPTOP-BOBEDDVK\\.local\\bin\\uvx.exe --from git+https://github.com/github/spec-kit.git specify init s77\")",
+      "Bash(cmd /c \"chcp 65001 >nul && set PYTHONIOENCODING=utf-8 && set PYTHONLEGACYWINDOWSSTDIO=1 && C:\\Users\\default.LAPTOP-BOBEDDVK\\.local\\bin\\uvx.exe --from git+https://github.com/github/spec-kit.git specify init s77 --force\")",
+      "Bash(cmd /c \"dir\")",
+      "Bash(cmd /c \"if exist s77 (echo s77 folder exists && dir s77) else (echo s77 folder does not exist)\")",
+      "Bash(cmd /c \"set NO_COLOR=1 && set TERM=dumb && C:\\Users\\default.LAPTOP-BOBEDDVK\\.local\\bin\\uvx.exe --from git+https://github.com/github/spec-kit.git specify init s77 --here --force 2>&1\")",
+      "Bash(cmd /c \"set FORCE_COLOR=0 && set NO_COLOR=1 && set TERM=dumb && set PYTHONIOENCODING=ascii && C:\\Users\\default.LAPTOP-BOBEDDVK\\.local\\bin\\uvx.exe --from git+https://github.com/github/spec-kit.git specify init s77 --here --force\")",
+      "Bash(cmd /c \"set PYTHONUTF8=1 && chcp 65001 && C:\\Users\\default.LAPTOP-BOBEDDVK\\.local\\bin\\uvx.exe --from git+https://github.com/github/spec-kit.git specify init s77 --here --force 2>&1\")",
+      "Bash(cmd /c \"xcopy /E /Y s77\\* . && rmdir /S /Q s77\")",
+      "Bash(cmd /c \"robocopy s77 . /E /MOVE\")",
+      "Bash(cmd /c \"dir /b\")",
+      "Bash(cmd /c \"npx create-next-app@latest cql-builder --typescript --tailwind --eslint --app --src-dir --import-alias @/* --use-npm\")",
+      "Bash(cmd /c \"dir cql-builder\")",
+      "Bash(cmd /c \"mkdir cql-builder && cd cql-builder && mkdir src && mkdir src\\app && mkdir src\\components && mkdir src\\lib && mkdir src\\types && mkdir public\")",
+      "Bash(cmd /c \"if exist cql-builder (echo Directory exists) else (echo Directory does not exist)\")",
+      "Bash(dir /b c:Usersdefault.LAPTOP-BOBEDDVKOneDriveDocumentsGitHubs77)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(dir:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
