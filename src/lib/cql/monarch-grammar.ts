@@ -133,8 +133,9 @@ export const cqlMonarchLanguage: languages.IMonarchLanguage = {
       [/\/\*/, 'comment', '@comment'],
 
       // Date/Time literals - CQL uses @ prefix
-      [/@\d{4}(-\d{2}(-\d{2}(T\d{2}(:\d{2}(:\d{2}(\.\d+)?)?)?)?)?)?([+-]\d{2}:\d{2}|Z)?/, 'number.date'],
-      [/@T\d{2}(:\d{2}(:\d{2}(\.\d+)?)?)?/, 'number.date'],
+      // Note: Must escape @ as \x40 to avoid Monarch attribute reference interpretation
+      [/\x40\d{4}(-\d{2}(-\d{2}(T\d{2}(:\d{2}(:\d{2}(\.\d+)?)?)?)?)?)?([+-]\d{2}:\d{2}|Z)?/, 'number.date'],
+      [/\x40T\d{2}(:\d{2}(:\d{2}(\.\d+)?)?)?/, 'number.date'],
 
       // Strings - double quoted (identifiers)
       [/"([^"\\]|\\.)*$/, 'string.invalid'],
