@@ -6,7 +6,7 @@ import { WelcomeScreen } from '@/components/cql-builder/welcome-screen';
 import { ConversationFlow } from '@/components/cql-builder/conversation-flow';
 import { CodeGenerator } from '@/components/cql-builder/code-generator';
 import { CodeReview } from '@/components/cql-builder/code-review';
-import { Stethoscope, Github } from 'lucide-react';
+import { Github, Book, HelpCircle, Target } from 'lucide-react';
 import Link from 'next/link';
 
 function Header() {
@@ -27,16 +27,29 @@ function Header() {
           <span className="font-medium text-base">CQL Builder</span>
         </Link>
         <nav className="flex items-center gap-4">
-          <a
-            href="https://cql.hl7.org/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+          <Link
+            href="/docs"
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
           >
+            <Book className="w-4 h-4" />
             Docs
-          </a>
+          </Link>
+          <Link
+            href="/faq"
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+          >
+            <HelpCircle className="w-4 h-4" />
+            FAQ
+          </Link>
+          <Link
+            href="/vision"
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+          >
+            <Target className="w-4 h-4" />
+            Vision
+          </Link>
           <a
-            href="https://github.com/FHIR-IQ"
+            href="https://github.com/anthropics/s77"
             target="_blank"
             rel="noopener noreferrer"
             className="text-muted-foreground hover:text-foreground transition-colors"
@@ -84,13 +97,19 @@ function Footer() {
             </div>
           </div>
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            <Link href="/docs" className="hover:text-foreground">
+              Documentation
+            </Link>
+            <Link href="/vision" className="hover:text-foreground">
+              Roadmap
+            </Link>
             <a
-              href="https://build.fhir.org/ig/HL7/cqf-measures/using-cql.html"
+              href="https://github.com/anthropics/s77/blob/main/CONTRIBUTING.md"
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-foreground"
             >
-              CQL Best Practices
+              Contribute
             </a>
             <a
               href="https://vsac.nlm.nih.gov/"
@@ -99,14 +118,6 @@ function Footer() {
               className="hover:text-foreground"
             >
               VSAC
-            </a>
-            <a
-              href="https://build.fhir.org/ig/HL7/cql-ig/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-foreground"
-            >
-              CQL IG
             </a>
           </div>
         </div>
