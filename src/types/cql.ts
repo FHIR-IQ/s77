@@ -1,4 +1,35 @@
 // CQL Builder Types - Based on HL7 CQL v1.5.3 Specification
+// FHIR IQ - Open Quality
+
+// FHIR Implementation Guide Types
+export type FHIRImplementationGuide =
+  | 'us-core'          // US Core IG
+  | 'qi-core'          // QI-Core IG (for quality measures)
+  | 'carin-bb'         // CARIN Blue Button IG
+  | 'hedis'            // HEDIS IG
+  | 'davinci-pdex'     // Da Vinci PDex
+  | 'mcode';           // mCODE (oncology)
+
+export interface FHIRIGInfo {
+  id: FHIRImplementationGuide;
+  name: string;
+  version: string;
+  url: string;
+  description: string;
+  fhirHelpers: string;
+}
+
+// Synthea Configuration for Test Data Generation
+export interface SyntheaConfig {
+  population: number;
+  state: string;
+  city?: string;
+  gender?: 'M' | 'F';
+  minAge?: number;
+  maxAge?: number;
+  modules?: string[];          // Synthea disease modules to include
+  seed?: number;               // For reproducible data
+}
 
 export type MeasureType =
   | 'clinical-quality'      // Clinical Quality Measures (CMS/eCQM)
@@ -95,6 +126,12 @@ export interface MeasureRequirement {
 
   // Step E: Evidence
   evidenceReferences: EvidenceReference[];
+
+  // FHIR IG Selection
+  fhirIG: FHIRImplementationGuide;
+
+  // Synthea Test Data Config
+  syntheaConfig?: SyntheaConfig;
 
   // Additional context
   targetPopulation?: string;

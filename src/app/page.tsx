@@ -13,11 +13,18 @@ function Header() {
   return (
     <header className="border-b bg-white sticky top-0 z-50">
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-clinical flex items-center justify-center">
-            <Stethoscope className="w-5 h-5 text-white" />
+        <Link href="/" className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center">
+              <span className="text-white font-bold text-sm">IQ</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="font-bold text-lg leading-tight">FHIR IQ</span>
+              <span className="text-[10px] text-muted-foreground leading-tight">Open Quality</span>
+            </div>
           </div>
-          <span className="font-semibold text-lg">CQL Builder</span>
+          <div className="h-6 w-px bg-border mx-1" />
+          <span className="font-medium text-base">CQL Builder</span>
         </Link>
         <nav className="flex items-center gap-4">
           <a
@@ -29,7 +36,7 @@ function Header() {
             Docs
           </a>
           <a
-            href="https://github.com"
+            href="https://github.com/FHIR-IQ"
             target="_blank"
             rel="noopener noreferrer"
             className="text-muted-foreground hover:text-foreground transition-colors"
@@ -47,25 +54,34 @@ function Footer() {
     <footer className="border-t py-6 mt-auto">
       <div className="container mx-auto px-4">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="text-sm text-muted-foreground">
-            Based on{' '}
-            <a
-              href="https://cql.hl7.org/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-clinical hover:underline"
-            >
-              HL7 CQL v1.5.3
-            </a>{' '}
-            and{' '}
-            <a
-              href="https://build.fhir.org/ig/HL7/cqf-measures/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-clinical hover:underline"
-            >
-              CQF Measures IG
-            </a>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center">
+                <span className="text-white font-bold text-xs">IQ</span>
+              </div>
+              <span className="text-sm font-medium">FHIR IQ Open Quality</span>
+            </div>
+            <span className="text-sm text-muted-foreground">|</span>
+            <div className="text-sm text-muted-foreground">
+              Based on{' '}
+              <a
+                href="https://cql.hl7.org/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-clinical hover:underline"
+              >
+                HL7 CQL v1.5.3
+              </a>{' '}
+              and{' '}
+              <a
+                href="https://build.fhir.org/ig/HL7/cqf-measures/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-clinical hover:underline"
+              >
+                CQF Measures IG
+              </a>
+            </div>
           </div>
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <a
@@ -109,6 +125,7 @@ function MainContent() {
     case 'problem':
     case 'measure-type':
     case 'scoring-type':
+    case 'fhir-ig':
     case 'value-sets':
     case 'evidence':
     case 'additional-details':

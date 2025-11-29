@@ -6,6 +6,8 @@ import type {
   ValueSetReference,
   EvidenceReference,
   GeneratedCQL,
+  FHIRImplementationGuide,
+  SyntheaConfig,
 } from '@/types/cql';
 
 export type ConversationStep =
@@ -14,6 +16,7 @@ export type ConversationStep =
   | 'problem'
   | 'measure-type'
   | 'scoring-type'
+  | 'fhir-ig'
   | 'value-sets'
   | 'evidence'
   | 'additional-details'
@@ -52,6 +55,8 @@ interface CQLBuilderState {
   setProblem: (problem: string) => void;
   setMeasureType: (type: MeasureType) => void;
   setScoringType: (type: MeasureScoringType) => void;
+  setFHIRIG: (ig: FHIRImplementationGuide) => void;
+  setSyntheaConfig: (config: SyntheaConfig) => void;
   addValueSet: (valueSet: ValueSetReference) => void;
   removeValueSet: (oid: string) => void;
   addEvidence: (evidence: EvidenceReference) => void;
@@ -110,6 +115,14 @@ export const useCQLBuilderStore = create<CQLBuilderState>((set, get) => ({
 
   setScoringType: (type) => {
     get().updateRequirements({ scoringType: type });
+  },
+
+  setFHIRIG: (ig) => {
+    get().updateRequirements({ fhirIG: ig });
+  },
+
+  setSyntheaConfig: (config) => {
+    get().updateRequirements({ syntheaConfig: config });
   },
 
   addValueSet: (valueSet) => {

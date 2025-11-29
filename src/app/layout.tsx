@@ -5,9 +5,9 @@ import './globals.css';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'CQL Builder - Clinical Quality Language Code Generator',
+  title: 'FHIR IQ CQL Builder - Open Quality',
   description:
-    'Generate production-ready CQL (Clinical Quality Language) code using natural language. Based on HL7 CQL v1.5.3 specification and CQF Measures Implementation Guide.',
+    'Generate production-ready CQL (Clinical Quality Language) code using natural language. Based on HL7 CQL v1.5.3 specification and CQF Measures Implementation Guide. Powered by FHIR IQ Open Quality.',
   keywords: [
     'CQL',
     'Clinical Quality Language',
@@ -17,12 +17,16 @@ export const metadata: Metadata = {
     'Quality Measures',
     'eCQM',
     'Clinical Decision Support',
+    'FHIR IQ',
+    'Open Quality',
+    'QI-Core',
+    'US Core',
   ],
-  authors: [{ name: 'CQL Builder' }],
+  authors: [{ name: 'FHIR IQ' }],
   openGraph: {
-    title: 'CQL Builder - AI-Powered Clinical Quality Language Generator',
+    title: 'FHIR IQ CQL Builder - Open Quality',
     description:
-      'Create production-ready CQL measures using natural language. Validated against HL7 specifications.',
+      'Create production-ready CQL measures using natural language. Validated against HL7 specifications. Powered by FHIR IQ.',
     type: 'website',
   },
 };

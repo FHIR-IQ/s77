@@ -1,7 +1,105 @@
 // CQL Knowledge Base - Based on HL7 CQL v1.5.3 and CQF Measures IG
+// FHIR IQ - Open Quality
 // This module provides comprehensive CQL patterns, templates, and examples
 
-import { MeasureType, MeasureScoringType, ClinicalDomain, ValueSetReference } from '@/types/cql';
+import { MeasureType, MeasureScoringType, ClinicalDomain, ValueSetReference, FHIRImplementationGuide, FHIRIGInfo } from '@/types/cql';
+
+// FHIR Implementation Guide Information
+export const fhirIGInfo: Record<FHIRImplementationGuide, FHIRIGInfo> = {
+  'us-core': {
+    id: 'us-core',
+    name: 'US Core',
+    version: '6.1.0',
+    url: 'http://hl7.org/fhir/us/core',
+    description: 'Base US-specific FHIR profiles. Required for US regulatory reporting and interoperability.',
+    fhirHelpers: "include USCoreCommon version '6.1.0' called USCore",
+  },
+  'qi-core': {
+    id: 'qi-core',
+    name: 'QI-Core',
+    version: '6.0.0',
+    url: 'http://hl7.org/fhir/us/qicore',
+    description: 'Quality Improvement profiles built on US Core. Recommended for clinical quality measures and eCQMs.',
+    fhirHelpers: "include QICoreCommon version '2.0.0' called QICoreCommon",
+  },
+  'carin-bb': {
+    id: 'carin-bb',
+    name: 'CARIN Blue Button',
+    version: '2.0.0',
+    url: 'http://hl7.org/fhir/us/carin-bb',
+    description: 'Consumer-directed payer data exchange. Used for claims and coverage data access.',
+    fhirHelpers: "include CARINCommon version '2.0.0' called CARINCommon",
+  },
+  hedis: {
+    id: 'hedis',
+    name: 'HEDIS IG',
+    version: '2024',
+    url: 'https://www.ncqa.org/hedis',
+    description: 'NCQA HEDIS measure specifications. Used for health plan quality measurement.',
+    fhirHelpers: "include HEDISCommon version '2024' called HEDISCommon",
+  },
+  'davinci-pdex': {
+    id: 'davinci-pdex',
+    name: 'Da Vinci PDex',
+    version: '2.0.0',
+    url: 'http://hl7.org/fhir/us/davinci-pdex',
+    description: 'Payer Data Exchange for member health history. Used for payer-to-payer data exchange.',
+    fhirHelpers: "include PDexCommon version '2.0.0' called PDexCommon",
+  },
+  mcode: {
+    id: 'mcode',
+    name: 'mCODE (Oncology)',
+    version: '3.0.0',
+    url: 'http://hl7.org/fhir/us/mcode',
+    description: 'Minimal Common Oncology Data Elements. Standard for cancer data interoperability.',
+    fhirHelpers: "include mCODECommon version '3.0.0' called mCODE",
+  },
+};
+
+// Synthea Disease Modules
+export const syntheaModules = {
+  // Chronic Conditions
+  diabetes: { name: 'Diabetes', module: 'diabetes', description: 'Type 1 and Type 2 diabetes' },
+  hypertension: { name: 'Hypertension', module: 'hypertension', description: 'High blood pressure' },
+  heartDisease: { name: 'Cardiovascular Disease', module: 'cardiovascular_disease', description: 'Heart conditions including CHF' },
+  copd: { name: 'COPD', module: 'copd', description: 'Chronic obstructive pulmonary disease' },
+  asthma: { name: 'Asthma', module: 'asthma', description: 'Asthma conditions' },
+  ckd: { name: 'Chronic Kidney Disease', module: 'chronic_kidney_disease', description: 'CKD stages 1-5' },
+
+  // Cancer
+  breastCancer: { name: 'Breast Cancer', module: 'breast_cancer', description: 'Breast cancer diagnosis and treatment' },
+  lungCancer: { name: 'Lung Cancer', module: 'lung_cancer', description: 'Lung cancer diagnosis and treatment' },
+  colorectalCancer: { name: 'Colorectal Cancer', module: 'colorectal_cancer', description: 'Colon and rectal cancer' },
+
+  // Behavioral Health
+  depression: { name: 'Depression', module: 'depression', description: 'Major depressive disorder' },
+  anxiety: { name: 'Anxiety', module: 'anxiety', description: 'Anxiety disorders' },
+  opioidAddiction: { name: 'Opioid Addiction', module: 'opioid_addiction', description: 'Opioid use disorder' },
+
+  // Women's Health
+  pregnancy: { name: 'Pregnancy', module: 'pregnancy', description: 'Pregnancy and childbirth' },
+  contraception: { name: 'Contraception', module: 'contraception', description: 'Contraceptive care' },
+
+  // Pediatric
+  allergies: { name: 'Allergies', module: 'allergies', description: 'Allergic conditions' },
+  immunizations: { name: 'Immunizations', module: 'immunizations', description: 'Standard vaccine schedules' },
+
+  // Other
+  covid19: { name: 'COVID-19', module: 'covid19', description: 'COVID-19 infection' },
+  wellness: { name: 'Wellness Visits', module: 'wellness_encounters', description: 'Preventive care visits' },
+};
+
+// US States for Synthea
+export const usStates = [
+  'Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 'Connecticut',
+  'Delaware', 'Florida', 'Georgia', 'Hawaii', 'Idaho', 'Illinois', 'Indiana', 'Iowa',
+  'Kansas', 'Kentucky', 'Louisiana', 'Maine', 'Maryland', 'Massachusetts', 'Michigan',
+  'Minnesota', 'Mississippi', 'Missouri', 'Montana', 'Nebraska', 'Nevada', 'New Hampshire',
+  'New Jersey', 'New Mexico', 'New York', 'North Carolina', 'North Dakota', 'Ohio',
+  'Oklahoma', 'Oregon', 'Pennsylvania', 'Rhode Island', 'South Carolina', 'South Dakota',
+  'Tennessee', 'Texas', 'Utah', 'Vermont', 'Virginia', 'Washington', 'West Virginia',
+  'Wisconsin', 'Wyoming', 'District of Columbia',
+];
 
 // Common VSAC Value Sets by Domain
 export const commonValueSets: Record<ClinicalDomain, ValueSetReference[]> = {

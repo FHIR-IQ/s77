@@ -11,8 +11,9 @@ import {
   measureTypeDescriptions,
   scoringTypeDescriptions,
   commonValueSets,
+  fhirIGInfo,
 } from '@/lib/cql-knowledge-base';
-import type { MeasureType, MeasureScoringType, ClinicalDomain, ValueSetReference } from '@/types/cql';
+import type { MeasureType, MeasureScoringType, ClinicalDomain, ValueSetReference, FHIRImplementationGuide } from '@/types/cql';
 import {
   ArrowRight,
   ArrowLeft,
@@ -25,6 +26,8 @@ import {
   Database,
   FileText,
   Sparkles,
+  Layers,
+  ExternalLink,
 } from 'lucide-react';
 
 // Step A: Purpose
@@ -255,9 +258,9 @@ function ScoringTypeStep() {
       addMessage('user', `Using ${scoringTypeDescriptions[selected].title} scoring`);
       addMessage(
         'assistant',
-        'Now let\'s identify the clinical value sets needed to define your measure populations. Value sets contain the clinical codes (like diagnoses, procedures, medications) that identify relevant patients.'
+        'Now select the FHIR Implementation Guide that best fits your use case. This determines the data model and profiles used in your CQL library.'
       );
-      setStep('value-sets');
+      setStep('fhir-ig');
     }
   };
 
@@ -321,7 +324,105 @@ function ScoringTypeStep() {
   );
 }
 
-// Step D: Value Sets
+// Step D: FHIR Implementation Guide Selection
+function FHIRIGStep() {
+  const { requirements, setFHIRIG, setStep, addMessage } = useCQLBuilderStore();
+  const [selected, setSelected] = useState<FHIRImplementationGuide | null>(
+    requirements.fhirIG || null
+  );
+
+  const handleNext = () => {
+    if (selected) {
+      setFHIRIG(selected);
+      addMessage('user', `Using ${fhirIGInfo[selected].name} Implementation Guide`);
+      addMessage(
+        'assistant',
+        'Now let\'s identify the clinical value sets needed to define your measure populations. Value sets contain the clinical codes (like diagnoses, procedures, medications) that identify relevant patients.'
+      );
+      setStep('value-sets');
+    }
+  };
+
+  const handleBack = () => {
+    setStep('scoring-type');
+  };
+
+  const igOptions: FHIRImplementationGuide[] = ['qi-core', 'us-core', 'hedis', 'carin-bb', 'davinci-pdex', 'mcode'];
+
+  return (
+    <Card className="w-full max-w-3xl mx-auto">
+      <CardHeader>
+        <div className="flex items-center gap-2 text-blue-600 mb-2">
+          <Layers className="w-5 h-5" />
+          <span className="text-sm font-medium">Step D</span>
+        </div>
+        <CardTitle>Select FHIR Implementation Guide</CardTitle>
+        <CardDescription>
+          Choose the FHIR IG that best fits your measure's use case. This determines the profiles and data model used in your CQL library.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid gap-3">
+          {igOptions.map((ig) => {
+            const info = fhirIGInfo[ig];
+            return (
+              <div
+                key={ig}
+                onClick={() => setSelected(ig)}
+                className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                  selected === ig
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-border hover:border-blue-300'
+                }`}
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-medium">{info.name}</h4>
+                      <Badge variant="outline" className="text-xs">v{info.version}</Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-1">{info.description}</p>
+                    <a
+                      href={info.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-blue-600 hover:underline inline-flex items-center gap-1 mt-2"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      View IG <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+                  <div
+                    className={`w-4 h-4 rounded-full border-2 flex-shrink-0 ${
+                      selected === ig ? 'border-blue-500 bg-blue-500' : 'border-muted-foreground'
+                    }`}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
+          <p className="text-sm text-blue-800">
+            <strong>Recommendation:</strong> For clinical quality measures (eCQMs), use <strong>QI-Core</strong>.
+            For general US healthcare interoperability, use <strong>US Core</strong>.
+            For payer/claims data, use <strong>CARIN Blue Button</strong>.
+          </p>
+        </div>
+        <div className="flex justify-between pt-4">
+          <Button variant="outline" onClick={handleBack}>
+            <ArrowLeft className="w-4 h-4 mr-2" /> Back
+          </Button>
+          <Button onClick={handleNext} disabled={!selected} className="bg-blue-600 hover:bg-blue-700">
+            Continue <ArrowRight className="w-4 h-4 ml-2" />
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Step E: Value Sets
 function ValueSetsStep() {
   const { requirements, addValueSet, removeValueSet, setStep, addMessage, updateRequirements } =
     useCQLBuilderStore();
@@ -357,7 +458,7 @@ function ValueSetsStep() {
   };
 
   const handleBack = () => {
-    setStep('scoring-type');
+    setStep('fhir-ig');
   };
 
   const domains = Object.keys(commonValueSets) as ClinicalDomain[];
@@ -626,6 +727,8 @@ export function ConversationFlow() {
       return <MeasureTypeStep />;
     case 'scoring-type':
       return <ScoringTypeStep />;
+    case 'fhir-ig':
+      return <FHIRIGStep />;
     case 'value-sets':
       return <ValueSetsStep />;
     case 'evidence':

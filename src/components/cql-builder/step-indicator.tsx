@@ -2,7 +2,7 @@
 
 import { cn } from '@/lib/utils';
 import { useCQLBuilderStore, ConversationStep } from '@/lib/store';
-import { CheckCircle2, Circle, Loader2 } from 'lucide-react';
+import { CheckCircle2, Loader2 } from 'lucide-react';
 
 const steps: { id: ConversationStep; label: string; shortLabel: string }[] = [
   { id: 'welcome', label: 'Welcome', shortLabel: 'Start' },
@@ -10,9 +10,10 @@ const steps: { id: ConversationStep; label: string; shortLabel: string }[] = [
   { id: 'problem', label: 'Problem', shortLabel: 'B' },
   { id: 'measure-type', label: 'Measure Type', shortLabel: 'C' },
   { id: 'scoring-type', label: 'Scoring', shortLabel: 'C' },
-  { id: 'value-sets', label: 'Value Sets', shortLabel: 'D' },
-  { id: 'evidence', label: 'Evidence', shortLabel: 'E' },
-  { id: 'additional-details', label: 'Details', shortLabel: 'F' },
+  { id: 'fhir-ig', label: 'FHIR IG', shortLabel: 'D' },
+  { id: 'value-sets', label: 'Value Sets', shortLabel: 'E' },
+  { id: 'evidence', label: 'Evidence', shortLabel: 'F' },
+  { id: 'additional-details', label: 'Details', shortLabel: 'G' },
   { id: 'generating', label: 'Generating', shortLabel: 'Gen' },
   { id: 'review', label: 'Review', shortLabel: 'Done' },
 ];
@@ -23,6 +24,7 @@ const stepOrder: ConversationStep[] = [
   'problem',
   'measure-type',
   'scoring-type',
+  'fhir-ig',
   'value-sets',
   'evidence',
   'additional-details',
@@ -36,7 +38,7 @@ export function StepIndicator() {
 
   // Filter to show main steps only
   const mainSteps = steps.filter((s) =>
-    ['welcome', 'purpose', 'problem', 'measure-type', 'value-sets', 'evidence', 'review'].includes(s.id)
+    ['welcome', 'purpose', 'problem', 'measure-type', 'fhir-ig', 'value-sets', 'evidence', 'review'].includes(s.id)
   );
 
   return (
@@ -56,8 +58,8 @@ export function StepIndicator() {
                 <div
                   className={cn(
                     'w-8 h-8 rounded-full flex items-center justify-center transition-colors',
-                    isCompleted && 'bg-clinical text-white',
-                    isCurrent && 'bg-clinical/20 border-2 border-clinical text-clinical',
+                    isCompleted && 'bg-gradient-to-br from-blue-600 to-cyan-500 text-white',
+                    isCurrent && 'bg-blue-100 border-2 border-blue-600 text-blue-600',
                     isUpcoming && 'bg-muted text-muted-foreground'
                   )}
                 >
@@ -72,7 +74,7 @@ export function StepIndicator() {
                 <span
                   className={cn(
                     'text-xs mt-1 hidden sm:block',
-                    isCurrent && 'font-medium text-clinical',
+                    isCurrent && 'font-medium text-blue-600',
                     isUpcoming && 'text-muted-foreground'
                   )}
                 >
@@ -83,7 +85,7 @@ export function StepIndicator() {
                 <div
                   className={cn(
                     'w-8 sm:w-12 h-0.5 mx-1',
-                    isCompleted ? 'bg-clinical' : 'bg-muted'
+                    isCompleted ? 'bg-gradient-to-r from-blue-600 to-cyan-500' : 'bg-muted'
                   )}
                 />
               )}

@@ -20,7 +20,13 @@ import {
   ExternalLink,
   FileJson,
   Zap,
+  Wrench,
+  TestTube,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { syntheaModules, usStates } from '@/lib/cql-knowledge-base';
 
 interface ValidationResult {
   valid: boolean;
@@ -50,13 +56,23 @@ interface CompilationResult {
 }
 
 export function CodeReview() {
-  const { generatedCQL, requirements, reset } = useCQLBuilderStore();
+  const { generatedCQL, requirements, reset, setGeneratedCQL } = useCQLBuilderStore();
   const [copied, setCopied] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
   const [isCompiling, setIsCompiling] = useState(false);
+  const [isFixing, setIsFixing] = useState(false);
   const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
   const [compilationResult, setCompilationResult] = useState<CompilationResult | null>(null);
   const [activeTab, setActiveTab] = useState<'cql' | 'elm'>('cql');
+  const [fixAttempts, setFixAttempts] = useState(0);
+
+  // Synthea configuration state
+  const [showSyntheaConfig, setShowSyntheaConfig] = useState(false);
+  const [syntheaConfig, setSyntheaConfig] = useState({
+    population: 100,
+    state: 'Massachusetts',
+    modules: [] as string[],
+  });
 
   if (!generatedCQL) {
     return (
@@ -159,6 +175,52 @@ export function CodeReview() {
 
   const handleStartOver = () => {
     reset();
+  };
+
+  const handleAutoFix = async () => {
+    if (!validationResult || validationResult.valid || !generatedCQL) return;
+
+    setIsFixing(true);
+    try {
+      const errorMessages = validationResult.errors
+        .map(e => `Line ${e.line || '?'}: ${e.message}`)
+        .join('\n');
+
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          requirements: {
+            ...requirements,
+            existingCQL: generatedCQL.library,
+            validationErrors: errorMessages,
+            fixMode: true,
+          },
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.cql) {
+        setGeneratedCQL({
+          library: data.cql,
+          suggestions: [
+            `Auto-fixed ${validationResult.errors.length} validation error(s)`,
+            ...(data.suggestions || []),
+          ],
+        });
+        setValidationResult(null);
+        setCompilationResult(null);
+        setFixAttempts(prev => prev + 1);
+
+        // Auto-validate after fix
+        setTimeout(() => handleValidate(), 500);
+      }
+    } catch (err) {
+      console.error('Auto-fix failed:', err);
+    } finally {
+      setIsFixing(false);
+    }
   };
 
   const openInPlayground = () => {
@@ -348,13 +410,34 @@ export function CodeReview() {
                     CQL is syntactically valid and ready for use!
                   </p>
                 ) : (
-                  <div className="space-y-2">
-                    {validationResult.errors.map((error, i) => (
-                      <div key={i} className="text-sm text-destructive bg-destructive/10 p-2 rounded">
-                        {error.line && <span className="font-mono mr-2">Line {error.line}:</span>}
-                        {error.message}
-                      </div>
-                    ))}
+                  <div className="space-y-3">
+                    <div className="space-y-2">
+                      {validationResult.errors.map((error, i) => (
+                        <div key={i} className="text-sm text-destructive bg-destructive/10 p-2 rounded">
+                          {error.line && <span className="font-mono mr-2">Line {error.line}:</span>}
+                          {error.message}
+                        </div>
+                      ))}
+                    </div>
+                    {fixAttempts < 3 && (
+                      <Button
+                        onClick={handleAutoFix}
+                        disabled={isFixing}
+                        className="w-full bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600"
+                      >
+                        {isFixing ? (
+                          <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <Wrench className="w-4 h-4 mr-2" />
+                        )}
+                        Auto-Fix Errors with AI
+                      </Button>
+                    )}
+                    {fixAttempts >= 3 && (
+                      <p className="text-xs text-muted-foreground">
+                        Max auto-fix attempts reached. Please review errors manually.
+                      </p>
+                    )}
                   </div>
                 )}
                 {validationResult.warnings.length > 0 && (
@@ -425,6 +508,103 @@ export function CodeReview() {
               </CardContent>
             </Card>
           )}
+
+          {/* Synthea Test Data Generator */}
+          <Card className="border-purple-200">
+            <CardHeader
+              className="cursor-pointer"
+              onClick={() => setShowSyntheaConfig(!showSyntheaConfig)}
+            >
+              <CardTitle className="text-lg flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <TestTube className="w-5 h-5 text-purple-600" />
+                  Synthea Test Data
+                </div>
+                {showSyntheaConfig ? (
+                  <ChevronUp className="w-4 h-4" />
+                ) : (
+                  <ChevronDown className="w-4 h-4" />
+                )}
+              </CardTitle>
+            </CardHeader>
+            {showSyntheaConfig && (
+              <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Generate synthetic patient data with Synthea for testing your CQL measure.
+                </p>
+
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs font-medium">Population Size</label>
+                    <Input
+                      type="number"
+                      value={syntheaConfig.population}
+                      onChange={(e) => setSyntheaConfig(prev => ({ ...prev, population: parseInt(e.target.value) || 100 }))}
+                      min={1}
+                      max={10000}
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-medium">State</label>
+                    <select
+                      value={syntheaConfig.state}
+                      onChange={(e) => setSyntheaConfig(prev => ({ ...prev, state: e.target.value }))}
+                      className="mt-1 w-full border rounded-md px-3 py-2 text-sm"
+                    >
+                      {usStates.map((state) => (
+                        <option key={state} value={state}>{state}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-medium">Disease Modules</label>
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {Object.entries(syntheaModules).slice(0, 8).map(([key, mod]) => (
+                        <Badge
+                          key={key}
+                          variant={syntheaConfig.modules.includes(mod.module) ? 'default' : 'outline'}
+                          className="cursor-pointer text-xs"
+                          onClick={() => {
+                            setSyntheaConfig(prev => ({
+                              ...prev,
+                              modules: prev.modules.includes(mod.module)
+                                ? prev.modules.filter(m => m !== mod.module)
+                                : [...prev.modules, mod.module]
+                            }));
+                          }}
+                        >
+                          {mod.name}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 text-xs font-mono space-y-1">
+                  <p className="text-purple-700 font-medium"># Generate Synthea data</p>
+                  <p className="text-slate-700">
+                    java -jar synthea-with-dependencies.jar \
+                  </p>
+                  <p className="text-slate-700 pl-4">
+                    -p {syntheaConfig.population} {syntheaConfig.state}
+                    {syntheaConfig.modules.length > 0 && ` \\\n    -m ${syntheaConfig.modules.join(',')}`}
+                  </p>
+                </div>
+
+                <a
+                  href="https://github.com/synthetichealth/synthea"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-purple-600 hover:underline flex items-center gap-1"
+                >
+                  Download Synthea <ExternalLink className="w-3 h-3" />
+                </a>
+              </CardContent>
+            )}
+          </Card>
 
           {/* CLI Commands */}
           <Card>

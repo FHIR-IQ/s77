@@ -8,10 +8,21 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
+interface ExtendedRequirements extends Partial<MeasureRequirement> {
+  existingCQL?: string;
+  validationErrors?: string;
+  fixMode?: boolean;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const requirements: Partial<MeasureRequirement> = body.requirements;
+    const requirements: ExtendedRequirements = body.requirements;
+
+    // Handle fix mode
+    if (requirements.fixMode && requirements.existingCQL && requirements.validationErrors) {
+      return await handleFixMode(requirements);
+    }
 
     if (!requirements || !requirements.purpose) {
       return NextResponse.json(
@@ -188,4 +199,66 @@ define "Numerator":
 define "Numerator Exclusions":
   false
 `;
+}
+
+async function handleFixMode(requirements: ExtendedRequirements) {
+  const fixPrompt = `You are a CQL (Clinical Quality Language) expert. Fix the following CQL code that has validation errors.
+
+## Current CQL Code (with errors):
+\`\`\`cql
+${requirements.existingCQL}
+\`\`\`
+
+## Validation Errors to Fix:
+${requirements.validationErrors}
+
+## Instructions:
+1. Analyze each error and understand what's wrong
+2. Fix ALL the errors while preserving the measure's intent
+3. Ensure the fixed code follows HL7 CQL v1.5.3 specification
+4. Keep all the business logic intact
+5. Return ONLY the complete fixed CQL code, no explanations
+
+Common fixes to consider:
+- Missing or incorrect FHIRHelpers include
+- Incorrect FHIR path expressions
+- Missing context statement
+- Incorrect interval syntax
+- Type mismatches in comparisons
+- Missing or incorrect library/version declarations
+- Incorrect value set references
+
+Return the complete fixed CQL library code.`;
+
+  try {
+    const message = await anthropic.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 4096,
+      messages: [
+        {
+          role: 'user',
+          content: fixPrompt,
+        },
+      ],
+    });
+
+    const responseContent = message.content[0];
+    if (responseContent.type !== 'text') {
+      throw new Error('Unexpected response format');
+    }
+
+    const rawCQL = responseContent.text;
+    const processedCQL = postProcessCQL(rawCQL);
+
+    return NextResponse.json({
+      cql: processedCQL,
+      suggestions: ['CQL has been auto-fixed based on validation errors'],
+    });
+  } catch (error) {
+    console.error('Auto-fix error:', error);
+    return NextResponse.json(
+      { error: 'Failed to auto-fix CQL' },
+      { status: 500 }
+    );
+  }
 }
