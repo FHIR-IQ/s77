@@ -137,12 +137,30 @@ export interface CompilationWarning {
 /**
  * CQL Translation Service Configuration
  * Uses the cqframework/cql-translation-service Docker image
+ *
+ * Public endpoints may experience downtime. For production use, consider:
+ * - Self-hosting on Railway.app (~$5/month): https://railway.com
+ * - Self-hosting on Render: https://render.com
+ * - Self-hosting on Fly.io: https://fly.io
+ * - Local Docker: docker run -d -p 8080:8080 cqframework/cql-translation-service:latest
+ *
+ * Note: CQL-to-ELM translation requires a Java-based service.
+ * There is no pure JavaScript/TypeScript npm package available.
+ * The cql-execution package only executes pre-compiled ELM JSON.
+ *
+ * Alternative CQL tools:
+ * - Firely .NET CQL SDK: https://github.com/FirelyTeam/firely-cql-sdk (requires .NET)
+ * - CQF Ruler: https://github.com/cqframework/cqf-ruler (full FHIR server with CQL)
+ * - Google CQL (Go): https://github.com/google/cql (experimental, no ELM export)
  */
 export const CQL_TRANSLATOR_CONFIG = {
   // Multiple public CQL Translation Service endpoints (tried in order)
+  // These are community-provided and may experience downtime
   publicEndpoints: [
     'https://cql-translation.alphora.com/cql/translator',
-    'https://cql-translation.dataphoria.org/cql/translator',
+    'https://cql.dataphoria.org/cql/translator',
+    // Add custom endpoint via environment variable
+    ...(process.env.NEXT_PUBLIC_CQL_TRANSLATOR_URL ? [process.env.NEXT_PUBLIC_CQL_TRANSLATOR_URL] : []),
   ],
 
   // Primary public endpoint (for backwards compatibility)
@@ -151,8 +169,8 @@ export const CQL_TRANSLATOR_CONFIG = {
   // Local Docker endpoint
   localEndpoint: 'http://localhost:8080/cql/translator',
 
-  // Docker run command
-  dockerCommand: 'docker run -d -p 8080:8080 cqframework/cql-translation-service:latest',
+  // Docker run command for self-hosting
+  dockerCommand: 'docker run -d -p 8080:8080 --restart unless-stopped cqframework/cql-translation-service:latest',
 
   // Default translation options
   defaultOptions: {
@@ -163,8 +181,30 @@ export const CQL_TRANSLATOR_CONFIG = {
     'detailed-errors': true,
   },
 
-  // Request timeout in milliseconds
-  timeout: 15000,
+  // Request timeout in milliseconds (increased for slow endpoints)
+  timeout: 30000,
+
+  // Self-hosting options
+  selfHosting: {
+    railway: {
+      name: 'Railway.app',
+      pricing: '$5/month (Hobby plan)',
+      instructions: 'Deploy Docker image cqframework/cql-translation-service:latest',
+      url: 'https://railway.com',
+    },
+    render: {
+      name: 'Render',
+      pricing: 'Free tier available (spins down after inactivity)',
+      instructions: 'Create Web Service from Docker image',
+      url: 'https://render.com',
+    },
+    flyio: {
+      name: 'Fly.io',
+      pricing: 'Pay-as-you-go, hobby tier available',
+      instructions: 'fly launch --image cqframework/cql-translation-service:latest',
+      url: 'https://fly.io',
+    },
+  },
 };
 
 /**
