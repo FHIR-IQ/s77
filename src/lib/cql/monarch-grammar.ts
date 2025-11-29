@@ -116,8 +116,8 @@ export const cqlMonarchLanguage: languages.IMonarchLanguage = {
       // FHIR Resources (before identifiers)
       [/\b(Patient|Encounter|Condition|Observation|Procedure|MedicationRequest|MedicationStatement|Medication|DiagnosticReport|Immunization|AllergyIntolerance|CarePlan|Goal|CareTeam|Coverage|Claim|ExplanationOfBenefit|Practitioner|Organization|Location|Device|Specimen|FamilyMemberHistory|ServiceRequest)\b/, 'type.fhir'],
 
-      // Annotations/Decorators
-      [/@[a-zA-Z_]\w*/, 'annotation'],
+      // Annotations/Decorators - escape @ to match literal @ symbol
+      [/\x40[a-zA-Z_]\w*/, 'annotation'],
 
       // Library declaration
       [/\b(library)\s+([A-Za-z_][A-Za-z0-9_]*)/, ['keyword', 'type.library']],
@@ -187,9 +187,10 @@ export const cqlMonarchLanguage: languages.IMonarchLanguage = {
       // Quantities with units
       [/\d+(\.\d+)?\s*'[^']*'/, 'number.quantity'],
 
-      // Date/Time literals
-      [/@\d{4}(-\d{2}(-\d{2}(T\d{2}(:\d{2}(:\d{2}(\.\d+)?)?)?)?)?)?([+-]\d{2}:\d{2}|Z)?/, 'date'],
-      [/@T\d{2}(:\d{2}(:\d{2}(\.\d+)?)?)?/, 'date'],
+      // Date/Time literals - CQL uses @ prefix for date/time literals
+      // Note: Must escape @ as \x40 to avoid Monarch attribute reference interpretation
+      [/\x40\d{4}(-\d{2}(-\d{2}(T\d{2}(:\d{2}(:\d{2}(\.\d+)?)?)?)?)?)?([+-]\d{2}:\d{2}|Z)?/, 'date'],
+      [/\x40T\d{2}(:\d{2}(:\d{2}(\.\d+)?)?)?/, 'date'],
 
       // Intervals
       [/Interval\s*[\[\(]/, 'keyword.interval'],
