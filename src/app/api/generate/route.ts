@@ -213,22 +213,34 @@ ${requirements.existingCQL}
 ${requirements.validationErrors}
 
 ## Instructions:
-1. Analyze each error and understand what's wrong
+1. Analyze each error carefully and understand what's wrong
 2. Fix ALL the errors while preserving the measure's intent
 3. Ensure the fixed code follows HL7 CQL v1.5.3 specification
 4. Keep all the business logic intact
-5. Return ONLY the complete fixed CQL code, no explanations
+5. Return ONLY the complete fixed CQL code wrapped in \`\`\`cql code blocks
 
-Common fixes to consider:
+## Common fixes to consider:
+- **Unbalanced parentheses**: Count all ( and ) to ensure they match. This often happens in:
+  - Nested exists() calls: exists(X where exists(Y))
+  - Complex where clauses with multiple conditions
+  - Boolean expressions with and/or
+  - Function calls within expressions
+- **Unbalanced brackets**: Count all [ and ] to ensure they match (used in FHIR retrieves like [Condition: "Value Set"])
 - Missing or incorrect FHIRHelpers include
-- Incorrect FHIR path expressions
+- Incorrect FHIR path expressions (use proper accessors like .value, .code, .status)
 - Missing context statement
-- Incorrect interval syntax
+- Incorrect interval syntax: Interval[@date, @date) or Interval[@date, @date]
 - Type mismatches in comparisons
 - Missing or incorrect library/version declarations
 - Incorrect value set references
 
-Return the complete fixed CQL library code.`;
+## IMPORTANT:
+- Carefully count parentheses in each line
+- Make sure every opening ( has a matching closing )
+- Make sure every opening [ has a matching closing ]
+- Double-check nested expressions
+
+Return the complete fixed CQL library code within code blocks.`;
 
   try {
     const message = await anthropic.messages.create({

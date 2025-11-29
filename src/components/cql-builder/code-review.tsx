@@ -269,6 +269,19 @@ export function CodeReview() {
 
       const data = await response.json();
 
+      if (data.error) {
+        console.error('Auto-fix API error:', data.error);
+        setValidationResult({
+          ...validationResult,
+          warnings: [
+            ...validationResult.warnings,
+            { message: `Auto-fix failed: ${data.error}`, severity: 'warning' },
+          ],
+        });
+        setLiveCompilationStatus('error');
+        return;
+      }
+
       if (data.cql) {
         setGeneratedCQL({
           library: data.cql,
@@ -287,6 +300,9 @@ export function CodeReview() {
 
         // Auto-validate after fix
         setTimeout(() => handleValidate(), 500);
+      } else {
+        console.error('Auto-fix returned no CQL:', data);
+        setLiveCompilationStatus('error');
       }
     } catch (err) {
       console.error('Auto-fix failed:', err);
