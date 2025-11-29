@@ -320,12 +320,12 @@ export function CodeReview() {
                 <Download className="w-4 h-4 mr-2" />
                 Download .cql File
               </Button>
-              {compilationResult?.elm && (
+              {compilationResult?.elm ? (
                 <Button variant="outline" onClick={() => handleDownload('elm')} className="w-full">
                   <FileJson className="w-4 h-4 mr-2" />
                   Download ELM .json
                 </Button>
-              )}
+              ) : null}
             </CardContent>
           </Card>
 
