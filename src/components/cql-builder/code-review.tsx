@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { useCQLBuilderStore } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,9 +25,26 @@ import {
   TestTube,
   ChevronDown,
   ChevronUp,
+  Loader2,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { syntheaModules, usStates } from '@/lib/cql-knowledge-base';
+
+// Dynamically import Monaco to avoid SSR issues
+const MonacoWrapper = dynamic(
+  () => import('@/components/editor/MonacoWrapper').then((mod) => mod.MonacoWrapper),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[500px] bg-slate-950 rounded-lg flex items-center justify-center">
+        <div className="flex items-center gap-2 text-slate-400">
+          <Loader2 className="w-5 h-5 animate-spin" />
+          <span>Loading CQL Editor...</span>
+        </div>
+      </div>
+    ),
+  }
+);
 
 interface ValidationResult {
   valid: boolean;
@@ -66,6 +84,14 @@ export function CodeReview() {
   const [activeTab, setActiveTab] = useState<'cql' | 'elm'>('cql');
   const [fixAttempts, setFixAttempts] = useState(0);
 
+  // Monaco Editor state
+  const [editorCode, setEditorCode] = useState('');
+  const [liveCompilationStatus, setLiveCompilationStatus] = useState<'idle' | 'compiling' | 'success' | 'error'>('idle');
+  const [liveCompilationTime, setLiveCompilationTime] = useState<number | null>(null);
+  const [liveErrorCount, setLiveErrorCount] = useState(0);
+  const [liveWarningCount, setLiveWarningCount] = useState(0);
+  const [editorTheme, setEditorTheme] = useState<'clinical-dark' | 'clinical-light'>('clinical-dark');
+
   // Synthea configuration state
   const [showSyntheaConfig, setShowSyntheaConfig] = useState(false);
   const [syntheaConfig, setSyntheaConfig] = useState({
@@ -73,6 +99,31 @@ export function CodeReview() {
     state: 'Massachusetts',
     modules: [] as string[],
   });
+
+  // Initialize editor code from generated CQL
+  useEffect(() => {
+    if (generatedCQL?.library) {
+      setEditorCode(generatedCQL.library);
+    }
+  }, [generatedCQL?.library]);
+
+  // Handle editor code changes with live validation
+  const handleEditorChange = useCallback((newCode: string) => {
+    setEditorCode(newCode);
+    // Update the store with the edited code
+    if (generatedCQL) {
+      setGeneratedCQL({
+        ...generatedCQL,
+        library: newCode,
+      });
+    }
+  }, [generatedCQL, setGeneratedCQL]);
+
+  // Handle live compilation results from Monaco worker
+  const handleMonacoMount = useCallback((editor: unknown, monaco: unknown) => {
+    // Editor mounted - could add additional setup here
+    console.log('CQL Monaco Editor mounted');
+  }, []);
 
   if (!generatedCQL) {
     return (
@@ -90,7 +141,7 @@ export function CodeReview() {
 
   const handleCopy = async () => {
     const content = activeTab === 'cql'
-      ? generatedCQL.library
+      ? editorCode || generatedCQL.library
       : JSON.stringify(compilationResult?.elm, null, 2);
     await navigator.clipboard.writeText(content);
     setCopied(true);
@@ -107,7 +158,7 @@ export function CodeReview() {
     let mimeType: string;
 
     if (type === 'cql') {
-      content = generatedCQL.library;
+      content = editorCode || generatedCQL.library;
       filename = `${libraryName}.cql`;
       mimeType = 'text/plain';
     } else {
@@ -130,20 +181,33 @@ export function CodeReview() {
   const handleValidate = async () => {
     setIsValidating(true);
     setValidationResult(null);
+    setLiveCompilationStatus('compiling');
+    const startTime = performance.now();
+
     try {
+      const cqlCode = editorCode || generatedCQL.library;
       const response = await fetch('/api/validate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cql: generatedCQL.library, fullValidation: true }),
+        body: JSON.stringify({ cql: cqlCode, fullValidation: true }),
       });
       const data = await response.json();
       setValidationResult(data);
+
+      // Update live compilation status
+      const endTime = performance.now();
+      setLiveCompilationTime(endTime - startTime);
+      setLiveErrorCount(data.errors?.length || 0);
+      setLiveWarningCount(data.warnings?.length || 0);
+      setLiveCompilationStatus(data.valid ? 'success' : 'error');
     } catch (err) {
       setValidationResult({
         valid: false,
         errors: [{ message: 'Failed to validate CQL', severity: 'error' }],
         warnings: [],
       });
+      setLiveCompilationStatus('error');
+      setLiveErrorCount(1);
     } finally {
       setIsValidating(false);
     }
@@ -153,10 +217,11 @@ export function CodeReview() {
     setIsCompiling(true);
     setCompilationResult(null);
     try {
+      const cqlCode = editorCode || generatedCQL.library;
       const response = await fetch('/api/compile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cql: generatedCQL.library }),
+        body: JSON.stringify({ cql: cqlCode }),
       });
       const data = await response.json();
       setCompilationResult(data);
@@ -181,18 +246,21 @@ export function CodeReview() {
     if (!validationResult || validationResult.valid || !generatedCQL) return;
 
     setIsFixing(true);
+    setLiveCompilationStatus('compiling');
+
     try {
       const errorMessages = validationResult.errors
         .map(e => `Line ${e.line || '?'}: ${e.message}`)
         .join('\n');
 
+      const cqlCode = editorCode || generatedCQL.library;
       const response = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           requirements: {
             ...requirements,
-            existingCQL: generatedCQL.library,
+            existingCQL: cqlCode,
             validationErrors: errorMessages,
             fixMode: true,
           },
@@ -209,15 +277,20 @@ export function CodeReview() {
             ...(data.suggestions || []),
           ],
         });
+        setEditorCode(data.cql);
         setValidationResult(null);
         setCompilationResult(null);
         setFixAttempts(prev => prev + 1);
+        setLiveCompilationStatus('idle');
+        setLiveErrorCount(0);
+        setLiveWarningCount(0);
 
         // Auto-validate after fix
         setTimeout(() => handleValidate(), 500);
       }
     } catch (err) {
       console.error('Auto-fix failed:', err);
+      setLiveCompilationStatus('error');
     } finally {
       setIsFixing(false);
     }
@@ -230,7 +303,7 @@ export function CodeReview() {
   };
 
   // Count lines of code
-  const lineCount = generatedCQL.library.split('\n').length;
+  const lineCount = (editorCode || generatedCQL.library).split('\n').length;
 
   return (
     <div className="w-full max-w-6xl mx-auto space-y-6 p-4">
@@ -326,21 +399,41 @@ export function CodeReview() {
           </CardHeader>
           <CardContent>
             <div className="relative">
-              <pre className="bg-slate-950 text-slate-50 p-4 rounded-lg overflow-x-auto text-sm max-h-[600px] overflow-y-auto font-mono">
-                <code>
-                  {activeTab === 'cql'
-                    ? generatedCQL.library
-                    : compilationResult?.elm
-                      ? JSON.stringify(compilationResult.elm, null, 2)
-                      : '// Compile CQL to generate ELM'
-                  }
-                </code>
-              </pre>
-              <div className="absolute top-2 right-2">
-                <Badge variant="outline" className="bg-slate-800 text-slate-300 border-slate-700">
-                  {activeTab === 'cql' ? '.cql' : '.json'}
-                </Badge>
-              </div>
+              {activeTab === 'cql' ? (
+                <MonacoWrapper
+                  value={editorCode}
+                  onChange={handleEditorChange}
+                  onMount={handleMonacoMount}
+                  height="500px"
+                  theme={editorTheme}
+                  readOnly={false}
+                  showMinimap={true}
+                  showLineNumbers={true}
+                  fontSize={13}
+                  wordWrap="on"
+                  compilationStatus={liveCompilationStatus}
+                  compilationTime={liveCompilationTime}
+                  errorCount={liveErrorCount}
+                  warningCount={liveWarningCount}
+                  onThemeChange={setEditorTheme}
+                />
+              ) : (
+                <div className="relative">
+                  <pre className="bg-slate-950 text-slate-50 p-4 rounded-lg overflow-x-auto text-sm max-h-[500px] overflow-y-auto font-mono">
+                    <code>
+                      {compilationResult?.elm
+                        ? JSON.stringify(compilationResult.elm, null, 2)
+                        : '// Compile CQL to generate ELM'
+                      }
+                    </code>
+                  </pre>
+                  <div className="absolute top-2 right-2">
+                    <Badge variant="outline" className="bg-slate-800 text-slate-300 border-slate-700">
+                      .json
+                    </Badge>
+                  </div>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
