@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { commonValueSets } from '@/lib/cql-knowledge-base';
-import type { ValueSetReference, ClinicalDomain } from '@/types/cql';
+import type { ClinicalDomain } from '@/types/cql';
 
 // VSAC Value Set Search API
 // Provides access to common value sets and search functionality
@@ -110,70 +110,3 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Additional popular VSAC value sets for reference
-export const additionalValueSets: ValueSetReference[] = [
-  // Encounters
-  {
-    name: 'Office Visit',
-    oid: '2.16.840.1.113883.3.464.1003.101.12.1001',
-    purpose: 'Office-based encounters',
-  },
-  {
-    name: 'Telehealth Services',
-    oid: '2.16.840.1.113883.3.464.1003.101.12.1031',
-    purpose: 'Virtual/telehealth encounters',
-  },
-  {
-    name: 'Annual Wellness Visit',
-    oid: '2.16.840.1.113883.3.526.3.1240',
-    purpose: 'Annual wellness encounters',
-  },
-
-  // Procedures
-  {
-    name: 'Colonoscopy',
-    oid: '2.16.840.1.113883.3.464.1003.108.12.1020',
-    purpose: 'Colonoscopy procedures',
-  },
-  {
-    name: 'Mammography',
-    oid: '2.16.840.1.113883.3.464.1003.108.11.1047',
-    purpose: 'Mammogram procedures',
-  },
-
-  // Labs
-  {
-    name: 'HbA1c Laboratory Test',
-    oid: '2.16.840.1.113883.3.464.1003.198.12.1013',
-    purpose: 'Hemoglobin A1c tests',
-  },
-  {
-    name: 'LDL Cholesterol',
-    oid: '2.16.840.1.113883.3.464.1003.198.12.1016',
-    purpose: 'LDL cholesterol tests',
-  },
-
-  // Medications
-  {
-    name: 'ACE Inhibitor or ARB',
-    oid: '2.16.840.1.113883.3.526.3.1139',
-    purpose: 'ACE inhibitors and ARBs',
-  },
-  {
-    name: 'Statin Therapy',
-    oid: '2.16.840.1.113883.3.526.3.1003',
-    purpose: 'Statin medications',
-  },
-
-  // Exclusions
-  {
-    name: 'Hospice Care',
-    oid: '2.16.840.1.113883.3.464.1003.1165',
-    purpose: 'Hospice care services',
-  },
-  {
-    name: 'Palliative Care',
-    oid: '2.16.840.1.113883.3.464.1003.101.12.1090',
-    purpose: 'Palliative care encounters',
-  },
-];
