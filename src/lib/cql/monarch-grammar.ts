@@ -48,7 +48,7 @@ export const FHIR_RESOURCES = [
 ];
 
 export const cqlMonarchLanguage: languages.IMonarchLanguage = {
-  defaultToken: 'invalid',
+  defaultToken: '',
   tokenPostfix: '.cql',
 
   // CQL is case-sensitive
@@ -58,7 +58,7 @@ export const cqlMonarchLanguage: languages.IMonarchLanguage = {
   keywords: [
     'library', 'version', 'using', 'include', 'called', 'public', 'private',
     'parameter', 'default', 'codesystem', 'valueset', 'code', 'concept',
-    'define', 'function', 'returns', 'context', 'Patient', 'Population',
+    'define', 'function', 'returns', 'context', 'fluent',
     'let', 'if', 'then', 'else', 'case', 'when', 'cast', 'as', 'is',
     'not', 'null', 'true', 'false', 'from', 'where', 'return', 'all',
     'distinct', 'sort', 'by', 'asc', 'ascending', 'desc', 'descending',
@@ -66,23 +66,15 @@ export const cqlMonarchLanguage: languages.IMonarchLanguage = {
     'collapse', 'expand', 'flatten', 'in', 'starts', 'ends', 'occurs',
     'same', 'day', 'includes', 'included', 'before', 'after', 'meets',
     'overlaps', 'start', 'end', 'width', 'duration', 'properly',
-    'singleton', 'List', 'Interval', 'Tuple', 'between', 'and', 'or',
-    'xor', 'implies', 'equivalent', 'contains', 'exists', 'retrieve',
-    'display', 'aggregate', 'starting', 'fluent'
+    'singleton', 'between', 'and', 'or', 'xor', 'implies', 'equivalent',
+    'contains', 'exists', 'retrieve', 'display', 'aggregate', 'starting'
   ],
 
   // CQL Type Keywords
   typeKeywords: [
     'Boolean', 'Integer', 'Decimal', 'String', 'DateTime', 'Date', 'Time',
     'Quantity', 'Ratio', 'Code', 'Concept', 'ValueSet', 'CodeSystem',
-    'Any', 'Choice', 'Interval', 'List', 'Tuple'
-  ],
-
-  // System Types
-  systemTypes: [
-    'System.Boolean', 'System.Integer', 'System.Decimal', 'System.String',
-    'System.DateTime', 'System.Date', 'System.Time', 'System.Quantity',
-    'System.Ratio', 'System.Code', 'System.Concept', 'System.Any'
+    'Any', 'Choice', 'Interval', 'List', 'Tuple', 'Patient', 'Population'
   ],
 
   // Temporal operators
@@ -91,135 +83,97 @@ export const cqlMonarchLanguage: languages.IMonarchLanguage = {
     'year', 'month', 'week', 'day', 'hour', 'minute', 'second', 'millisecond'
   ],
 
-  // Mathematical operators
-  operators: [
-    '+', '-', '*', '/', '^', '=', '~', '!=', '!~', '<>', '<', '>', '<=', '>=',
-    '|'
+  // FHIR Resources
+  fhirResources: [
+    'Patient', 'Encounter', 'Condition', 'Observation', 'Procedure',
+    'MedicationRequest', 'MedicationStatement', 'Medication', 'DiagnosticReport',
+    'Immunization', 'AllergyIntolerance', 'CarePlan', 'Goal', 'CareTeam',
+    'Coverage', 'Claim', 'ExplanationOfBenefit', 'Practitioner', 'Organization',
+    'Location', 'Device', 'Specimen', 'FamilyMemberHistory', 'ServiceRequest'
   ],
 
-  // Symbols
+  // Built-in functions
+  builtinFunctions: [
+    'AgeInYears', 'AgeInMonths', 'AgeInDays', 'AgeInHours', 'AgeInMinutes',
+    'AgeInSeconds', 'CalculateAge', 'CalculateAgeInYears', 'CalculateAgeInMonths',
+    'CalculateAgeInDays', 'Now', 'Today', 'TimeOfDay', 'Count', 'Sum', 'Min',
+    'Max', 'Avg', 'Median', 'Mode', 'StdDev', 'Variance', 'PopulationStdDev',
+    'PopulationVariance', 'First', 'Last', 'Single', 'Exists', 'Not', 'IsNull',
+    'IsTrue', 'IsFalse', 'ToConcept', 'ToCode', 'ToDateTime', 'ToDate', 'ToTime',
+    'ToDecimal', 'ToInteger', 'ToString', 'ToQuantity', 'ToBoolean', 'ToList',
+    'ToInterval', 'Flatten', 'Collapse', 'Expand', 'Length', 'Indexer', 'Lower',
+    'Upper', 'Split', 'Combine', 'StartsWith', 'EndsWith', 'Matches',
+    'ReplaceMatches', 'Substring', 'PositionOf', 'LastPositionOf', 'IndexOf',
+    'Abs', 'Ceiling', 'Floor', 'Truncate', 'Round', 'Ln', 'Log', 'Power', 'Exp',
+    'Successor', 'Predecessor', 'LowBoundary', 'HighBoundary', 'Precision',
+    'ConvertQuantity', 'ConvertsToBoolean', 'ConvertsToDate', 'ConvertsToDateTime',
+    'ConvertsToDecimal', 'ConvertsToInteger', 'ConvertsToLong', 'ConvertsToQuantity',
+    'ConvertsToRatio', 'ConvertsToString', 'ConvertsToTime'
+  ],
+
+  // Operators
+  operators: [
+    '=', '!=', '<>', '<', '>', '<=', '>=', '~', '!~', '+', '-', '*', '/', '^', '|'
+  ],
+
+  // Symbols for operator matching
   symbols: /[=><!~?:&|+\-*\/\^%]+/,
 
   // Escape sequences
   escapes: /\\(?:[abfnrtv\\"']|x[0-9A-Fa-f]{1,4}|u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8})/,
 
-  // The main tokenizer
+  // The main tokenizer - simplified without multi-group rules
   tokenizer: {
     root: [
       // Whitespace
-      { include: '@whitespace' },
+      [/[ \t\r\n]+/, ''],
 
       // Comments
       [/\/\/.*$/, 'comment'],
       [/\/\*/, 'comment', '@comment'],
 
-      // FHIR Resources (before identifiers)
-      [/\b(Patient|Encounter|Condition|Observation|Procedure|MedicationRequest|MedicationStatement|Medication|DiagnosticReport|Immunization|AllergyIntolerance|CarePlan|Goal|CareTeam|Coverage|Claim|ExplanationOfBenefit|Practitioner|Organization|Location|Device|Specimen|FamilyMemberHistory|ServiceRequest)\b/, 'type.fhir'],
+      // Date/Time literals - CQL uses @ prefix
+      [/@\d{4}(-\d{2}(-\d{2}(T\d{2}(:\d{2}(:\d{2}(\.\d+)?)?)?)?)?)?([+-]\d{2}:\d{2}|Z)?/, 'number.date'],
+      [/@T\d{2}(:\d{2}(:\d{2}(\.\d+)?)?)?/, 'number.date'],
 
-      // Annotations/Decorators - escape @ to match literal @ symbol
-      [/\x40[a-zA-Z_]\w*/, 'annotation'],
+      // Strings - double quoted (identifiers)
+      [/"([^"\\]|\\.)*$/, 'string.invalid'],
+      [/"/, 'string.identifier', '@string_double'],
 
-      // Library declaration
-      [/\b(library)\s+([A-Za-z_][A-Za-z0-9_]*)/, ['keyword', 'type.library']],
+      // Strings - single quoted
+      [/'([^'\\]|\\.)*$/, 'string.invalid'],
+      [/'/, 'string', '@string_single'],
 
-      // Include statement with alias
-      [/\b(include)\s+([A-Za-z_][A-Za-z0-9_]*)/, ['keyword', 'type.library']],
-      [/\b(called)\s+([A-Za-z_][A-Za-z0-9_]*)/, ['keyword', 'variable.alias']],
-
-      // Version strings
-      [/\b(version)\s+('[^']*')/, ['keyword', 'string.version']],
-
-      // Using FHIR declaration
-      [/\b(using)\s+(FHIR|QDM|QICore)/, ['keyword', 'type.model']],
-
-      // Context declarations
-      [/\b(context)\s+(Patient|Population|Practitioner|Unfiltered)/, ['keyword', 'type.context']],
-
-      // Define statements
-      [/\b(define)\s+(fluent\s+)?(function\s+)?("[^"]+"|[A-Za-z_][A-Za-z0-9_]*)/, ['keyword', 'keyword', 'keyword', 'variable.definition']],
-
-      // Parameter declarations
-      [/\b(parameter)\s+("[^"]+"|[A-Za-z_][A-Za-z0-9_]*)/, ['keyword', 'variable.parameter']],
-
-      // Valueset declarations
-      [/\b(valueset)\s+("[^"]+")/, ['keyword', 'variable.valueset']],
-
-      // Codesystem declarations
-      [/\b(codesystem)\s+("[^"]+")/, ['keyword', 'variable.codesystem']],
-
-      // Code declarations
-      [/\b(code)\s+("[^"]+")/, ['keyword', 'variable.code']],
-
-      // Concept declarations
-      [/\b(concept)\s+("[^"]+")/, ['keyword', 'variable.concept']],
-
-      // System types (e.g., System.Boolean)
-      [/\bSystem\.[A-Z][a-zA-Z]*\b/, 'type.system'],
-
-      // FHIR paths (e.g., Observation.code, Patient.birthDate)
-      [/\b([A-Z][a-zA-Z]*)(\.)(value|code|status|category|effective|onset|abatement|recorded|issued|performer|subject|encounter|period|start|end|birthDate|deceased|gender|name|identifier|address|telecom|maritalStatus|multipleBirth|contact|communication|generalPractitioner|managingOrganization|link|extension|id|meta|implicitRules|language|text|contained|modifierExtension)\b/, ['type.fhir', 'delimiter', 'property.fhir']],
-
-      // Keywords
-      [/\b(and|or|xor|implies|not)\b/, 'keyword.operator.logical'],
-      [/\b(before|after|during|overlaps|meets|starts|ends|occurs|same|properly|included|includes|within|contains)\b/, 'keyword.operator.temporal'],
-      [/\b(is|as|cast|convert)\b/, 'keyword.operator.type'],
-      [/\b(in|between)\b/, 'keyword.operator.membership'],
-
-      // Temporal units
-      [/\b(years?|months?|weeks?|days?|hours?|minutes?|seconds?|milliseconds?)\b/, 'keyword.temporal'],
-
-      // CQL Functions
-      [/\b(AgeInYears|AgeInMonths|AgeInDays|AgeInHours|AgeInMinutes|AgeInSeconds|CalculateAge|CalculateAgeInYears|CalculateAgeInMonths|CalculateAgeInDays|Now|Today|TimeOfDay|Count|Sum|Min|Max|Avg|Median|Mode|StdDev|Variance|PopulationStdDev|PopulationVariance|First|Last|Single|Exists|Not|IsNull|IsTrue|IsFalse|ToConcept|ToCode|ToDateTime|ToDate|ToTime|ToDecimal|ToInteger|ToString|ToQuantity|ToBoolean|ToList|ToInterval|Flatten|Collapse|Expand|Length|Indexer|Last|Lower|Upper|Split|Combine|StartsWith|EndsWith|Matches|ReplaceMatches|Substring|PositionOf|LastPositionOf|IndexOf|Abs|Ceiling|Floor|Truncate|Round|Ln|Log|Power|Exp|Successor|Predecessor|LowBoundary|HighBoundary|Precision|ConvertQuantity|ConvertsToBoolean|ConvertsToDate|ConvertsToDateTime|ConvertsToDecimal|ConvertsToInteger|ConvertsToLong|ConvertsToQuantity|ConvertsToRatio|ConvertsToString|ConvertsToTime)\b(?=\s*\()/, 'function.builtin'],
-
-      // Keywords (general)
-      [/\b(library|version|using|include|called|public|private|parameter|default|codesystem|valueset|code|concept|define|function|returns|context|let|if|then|else|case|when|from|where|return|all|distinct|sort|by|asc|ascending|desc|descending|with|such|that|without|union|intersect|except|flatten|singleton|aggregate|starting|fluent|retrieve|display)\b/, 'keyword'],
-
-      // Boolean literals
-      [/\b(true|false)\b/, 'constant.boolean'],
-
-      // Null
-      [/\bnull\b/, 'constant.null'],
+      // Numbers with units (quantities)
+      [/\d+(\.\d+)?\s*'[^']*'/, 'number.quantity'],
 
       // Numbers - Decimal and Integer
       [/\d+\.\d+/, 'number.float'],
       [/\d+/, 'number'],
 
-      // Quantities with units
-      [/\d+(\.\d+)?\s*'[^']*'/, 'number.quantity'],
+      // System types (e.g., System.Boolean)
+      [/System\.[A-Z][a-zA-Z]*/, 'type.system'],
 
-      // Date/Time literals - CQL uses @ prefix for date/time literals
-      // Note: Must escape @ as \x40 to avoid Monarch attribute reference interpretation
-      [/\x40\d{4}(-\d{2}(-\d{2}(T\d{2}(:\d{2}(:\d{2}(\.\d+)?)?)?)?)?)?([+-]\d{2}:\d{2}|Z)?/, 'date'],
-      [/\x40T\d{2}(:\d{2}(:\d{2}(\.\d+)?)?)?/, 'date'],
+      // Delimiters and brackets
+      [/[{}()\[\]]/, 'delimiter.bracket'],
+      [/[;,.]/, 'delimiter'],
+      [/:/, 'delimiter'],
 
-      // Intervals
-      [/Interval\s*[\[\(]/, 'keyword.interval'],
-
-      // Strings
-      [/'([^'\\]|\\.)*$/, 'string.invalid'],  // Non-terminated string
-      [/'/, 'string', '@string_single'],
-      [/"([^"\\]|\\.)*$/, 'string.invalid'],  // Non-terminated string
-      [/"/, 'string.identifier', '@string_double'],
-
-      // Delimiters and operators
-      [/[{}()\[\]]/, '@brackets'],
-      [/[<>](?!@symbols)/, '@brackets'],
-      [/@symbols/, {
+      // Operators
+      [/[=><!~?:&|+\-*\/\^%]+/, {
         cases: {
           '@operators': 'operator',
           '@default': ''
         }
       }],
 
-      // Delimiters
-      [/[;,.]/, 'delimiter'],
-      [/:/, 'delimiter.colon'],
-
-      // Identifiers
+      // Identifiers and keywords
       [/[A-Z][a-zA-Z0-9_]*/, {
         cases: {
           '@typeKeywords': 'type',
-          '@default': 'identifier.type'
+          '@fhirResources': 'type.fhir',
+          '@builtinFunctions': 'function.builtin',
+          '@default': 'identifier'
         }
       }],
       [/[a-z_][a-zA-Z0-9_]*/, {
@@ -234,7 +188,7 @@ export const cqlMonarchLanguage: languages.IMonarchLanguage = {
     comment: [
       [/[^\/*]+/, 'comment'],
       [/\/\*/, 'comment', '@push'],
-      ["\\*/", 'comment', '@pop'],
+      [/\*\//, 'comment', '@pop'],
       [/[\/*]/, 'comment']
     ],
 
@@ -250,10 +204,6 @@ export const cqlMonarchLanguage: languages.IMonarchLanguage = {
       [/@escapes/, 'string.escape'],
       [/\\./, 'string.escape.invalid'],
       [/"/, 'string.identifier', '@pop']
-    ],
-
-    whitespace: [
-      [/[ \t\r\n]+/, 'white'],
     ],
   },
 };
@@ -292,7 +242,7 @@ export const cqlLanguageConfiguration: languages.LanguageConfiguration = {
   },
   wordPattern: /(-?\d*\.\d\w*)|([^\`\~\!\@\#\%\^\&\*\(\)\-\=\+\[\{\]\}\\\|\;\:\'\"\,\.\<\>\/\?\s]+)/g,
   indentationRules: {
-    increaseIndentPattern: /^\s*(define|if|case|where|return|from|with|such that|without|let)\b.*:?\s*$/,
+    increaseIndentPattern: /^\s*(define|if|case|where|return|from|with|without|let)\b.*:?\s*$/,
     decreaseIndentPattern: /^\s*(else|then|end)\b/
   }
 };
@@ -318,5 +268,5 @@ export const cqlCompletionItemProvider = {
     'Min', 'Max', 'Avg', 'First', 'Last', 'Exists', 'IsNull', 'ToConcept',
     'ToDateTime', 'ToDate', 'ToQuantity', 'Flatten', 'Collapse', 'Length'
   ],
-  fhirResources: FHIR_RESOURCES.slice(0, 30) // Most common resources
+  fhirResources: FHIR_RESOURCES.slice(0, 30)
 };
