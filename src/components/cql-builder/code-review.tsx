@@ -26,9 +26,24 @@ import {
   ChevronDown,
   ChevronUp,
   Loader2,
+  Blocks,
+  Code2,
+  Package,
+  FolderArchive,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { syntheaModules, usStates } from '@/lib/cql-knowledge-base';
+import { TestPanel } from './test-panel';
+import { useTestStore } from '@/lib/test-store';
+import { VisualQueryBuilder } from './visual-query-builder';
+import {
+  generateLibraryResource,
+  generateMeasureBundle,
+  downloadCQL,
+  downloadELM,
+  downloadBundle,
+  downloadMeasureBundle,
+} from '@/lib/export-service';
 
 // Dynamically import Monaco to avoid SSR issues
 const MonacoWrapper = dynamic(
@@ -75,6 +90,7 @@ interface CompilationResult {
 
 export function CodeReview() {
   const { generatedCQL, requirements, reset, setGeneratedCQL } = useCQLBuilderStore();
+  const { isPanelOpen } = useTestStore();
   const [copied, setCopied] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
   const [isCompiling, setIsCompiling] = useState(false);
@@ -91,6 +107,9 @@ export function CodeReview() {
   const [liveErrorCount, setLiveErrorCount] = useState(0);
   const [liveWarningCount, setLiveWarningCount] = useState(0);
   const [editorTheme, setEditorTheme] = useState<'clinical-dark' | 'clinical-light'>('clinical-dark');
+
+  // Editor mode: 'code' or 'visual'
+  const [editorMode, setEditorMode] = useState<'code' | 'visual'>('code');
 
   // Synthea configuration state
   const [showSyntheaConfig, setShowSyntheaConfig] = useState(false);
@@ -177,6 +196,36 @@ export function CodeReview() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
+
+  const handleDownloadFhirBundle = () => {
+    const libraryName = requirements.purpose
+      ? requirements.purpose.replace(/[^a-zA-Z0-9]/g, '').slice(0, 30)
+      : 'CQLMeasure';
+    const cqlCode = editorCode || generatedCQL.library;
+
+    downloadMeasureBundle(cqlCode, compilationResult?.elm || null, {
+      libraryName,
+      libraryVersion: '1.0.0',
+      title: requirements.purpose || libraryName,
+      description: requirements.problemStatement,
+      valueSets: requirements.valueSets?.map((vs) => ({ name: vs.name, oid: vs.oid })) || [],
+      scoringType: (requirements.scoringType as 'proportion' | 'ratio' | 'continuous-variable' | 'cohort') || 'proportion',
+    }, `${libraryName}-measure-bundle`);
+  };
+
+  const handleVisualCQLGenerated = useCallback((cql: string) => {
+    setEditorCode(cql);
+    if (generatedCQL) {
+      setGeneratedCQL({
+        ...generatedCQL,
+        library: cql,
+      });
+    }
+    // Switch to code mode to show the generated CQL
+    setEditorMode('code');
+    setValidationResult(null);
+    setCompilationResult(null);
+  }, [generatedCQL, setGeneratedCQL]);
 
   const handleValidate = async () => {
     setIsValidating(true);
@@ -328,19 +377,49 @@ export function CodeReview() {
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2">
             <FileCode2 className="w-6 h-6 text-clinical" />
-            Generated CQL Library
+            CQL Library Editor
           </h2>
           <p className="text-muted-foreground">
-            Review, validate, compile, and download your CQL code
+            Build, validate, compile, and export your CQL code
           </p>
         </div>
         <div className="flex gap-2">
+          {/* Editor Mode Toggle */}
+          <div className="flex rounded-lg border overflow-hidden">
+            <Button
+              variant={editorMode === 'code' ? 'default' : 'ghost'}
+              size="sm"
+              className="rounded-none"
+              onClick={() => setEditorMode('code')}
+            >
+              <Code2 className="w-4 h-4 mr-1" />
+              Code
+            </Button>
+            <Button
+              variant={editorMode === 'visual' ? 'default' : 'ghost'}
+              size="sm"
+              className="rounded-none"
+              onClick={() => setEditorMode('visual')}
+            >
+              <Blocks className="w-4 h-4 mr-1" />
+              Visual
+            </Button>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleDownloadFhirBundle}
+            className="bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border-emerald-300 hover:border-emerald-400"
+          >
+            <Package className="w-4 h-4 mr-2 text-emerald-600" />
+            FHIR Bundle
+          </Button>
           <Button variant="outline" size="sm" onClick={openInPlayground}>
             <ExternalLink className="w-4 h-4 mr-2" />
-            Open Playground
+            Playground
           </Button>
           <Button variant="outline" size="sm" onClick={handleStartOver}>
-            <RotateCcw className="w-4 h-4 mr-2" /> New Measure
+            <RotateCcw className="w-4 h-4 mr-2" /> New
           </Button>
         </div>
       </div>
@@ -372,87 +451,95 @@ export function CodeReview() {
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
-        {/* Code Editor */}
-        <Card className="lg:col-span-2">
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <div className="flex gap-2">
-                <Button
-                  variant={activeTab === 'cql' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setActiveTab('cql')}
-                >
-                  <FileCode2 className="w-4 h-4 mr-1" />
-                  CQL
-                </Button>
-                <Button
-                  variant={activeTab === 'elm' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setActiveTab('elm')}
-                  disabled={!compilationResult?.elm}
-                >
-                  <FileJson className="w-4 h-4 mr-1" />
-                  ELM
-                </Button>
-              </div>
-              <div className="flex gap-2">
-                <Button variant="ghost" size="sm" onClick={handleCopy}>
-                  {copied ? (
-                    <CheckCircle className="w-4 h-4 text-green-500" />
-                  ) : (
-                    <Copy className="w-4 h-4" />
-                  )}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleDownload(activeTab)}
-                >
-                  <Download className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="relative">
-              {activeTab === 'cql' ? (
-                <MonacoWrapper
-                  value={editorCode}
-                  onChange={handleEditorChange}
-                  onMount={handleMonacoMount}
-                  height="500px"
-                  theme={editorTheme}
-                  readOnly={false}
-                  showMinimap={true}
-                  showLineNumbers={true}
-                  fontSize={13}
-                  wordWrap="on"
-                  compilationStatus={liveCompilationStatus}
-                  compilationTime={liveCompilationTime}
-                  errorCount={liveErrorCount}
-                  warningCount={liveWarningCount}
-                  onThemeChange={setEditorTheme}
-                />
-              ) : (
-                <div className="relative">
-                  <pre className="bg-slate-950 text-slate-50 p-4 rounded-lg overflow-x-auto text-sm max-h-[500px] overflow-y-auto font-mono">
-                    <code>
-                      {compilationResult?.elm
-                        ? JSON.stringify(compilationResult.elm, null, 2)
-                        : '// Compile CQL to generate ELM'
-                      }
-                    </code>
-                  </pre>
-                  <div className="absolute top-2 right-2">
-                    <Badge variant="outline" className="bg-slate-800 text-slate-300 border-slate-700">
-                      .json
-                    </Badge>
-                  </div>
+        {/* Visual Query Builder or Code Editor */}
+        {editorMode === 'visual' ? (
+          <div className="lg:col-span-2">
+            <VisualQueryBuilder
+              onCQLGenerated={handleVisualCQLGenerated}
+            />
+          </div>
+        ) : (
+          <Card className="lg:col-span-2">
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <div className="flex gap-2">
+                  <Button
+                    variant={activeTab === 'cql' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setActiveTab('cql')}
+                  >
+                    <FileCode2 className="w-4 h-4 mr-1" />
+                    CQL
+                  </Button>
+                  <Button
+                    variant={activeTab === 'elm' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setActiveTab('elm')}
+                    disabled={!compilationResult?.elm}
+                  >
+                    <FileJson className="w-4 h-4 mr-1" />
+                    ELM
+                  </Button>
                 </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                <div className="flex gap-2">
+                  <Button variant="ghost" size="sm" onClick={handleCopy}>
+                    {copied ? (
+                      <CheckCircle className="w-4 h-4 text-green-500" />
+                    ) : (
+                      <Copy className="w-4 h-4" />
+                    )}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDownload(activeTab)}
+                  >
+                    <Download className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="relative">
+                {activeTab === 'cql' ? (
+                  <MonacoWrapper
+                    value={editorCode}
+                    onChange={handleEditorChange}
+                    onMount={handleMonacoMount}
+                    height="500px"
+                    theme={editorTheme}
+                    readOnly={false}
+                    showMinimap={true}
+                    showLineNumbers={true}
+                    fontSize={13}
+                    wordWrap="on"
+                    compilationStatus={liveCompilationStatus}
+                    compilationTime={liveCompilationTime}
+                    errorCount={liveErrorCount}
+                    warningCount={liveWarningCount}
+                    onThemeChange={setEditorTheme}
+                  />
+                ) : (
+                  <div className="relative">
+                    <pre className="bg-slate-950 text-slate-50 p-4 rounded-lg overflow-x-auto text-sm max-h-[500px] overflow-y-auto font-mono">
+                      <code>
+                        {compilationResult?.elm
+                          ? JSON.stringify(compilationResult.elm, null, 2)
+                          : '// Compile CQL to generate ELM'
+                        }
+                      </code>
+                    </pre>
+                    <div className="absolute top-2 right-2">
+                      <Badge variant="outline" className="bg-slate-800 text-slate-300 border-slate-700">
+                        .json
+                      </Badge>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Sidebar */}
         <div className="space-y-4">
@@ -788,6 +875,12 @@ export function CodeReview() {
           </Card>
         </div>
       </div>
+
+      {/* Test Harness Panel */}
+      <TestPanel
+        elm={compilationResult?.elm || null}
+        className={isPanelOpen ? 'fixed bottom-4 right-4 z-50 shadow-xl' : ''}
+      />
     </div>
   );
 }
