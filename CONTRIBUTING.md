@@ -51,7 +51,7 @@ This project adheres to a Code of Conduct that all contributors are expected to 
 3. **Add upstream remote**
 
    ```bash
-   git remote add upstream https://github.com/anthropics/s77.git
+   git remote add upstream https://github.com/FHIR-IQ/s77.git
    ```
 
 4. **Install dependencies**
@@ -72,7 +72,7 @@ This project adheres to a Code of Conduct that all contributors are expected to 
 
 ## Project Structure
 
-```
+```text
 s77/
 ├── src/
 │   ├── app/                 # Next.js App Router pages
@@ -99,7 +99,7 @@ s77/
 
 ### Reporting Bugs
 
-1. Check if the bug has already been reported in [Issues](https://github.com/anthropics/s77/issues)
+1. Check if the bug has already been reported in [Issues](https://github.com/FHIR-IQ/s77/issues)
 2. If not, create a new issue with:
    - Clear, descriptive title
    - Steps to reproduce
@@ -128,6 +128,7 @@ s77/
 ### Branch Naming
 
 Use descriptive branch names:
+
 - `feature/visual-builder-drag-drop`
 - `fix/cql-compilation-error`
 - `docs/api-reference`
@@ -135,12 +136,14 @@ Use descriptive branch names:
 ### Commit Messages
 
 Write clear, concise commit messages:
+
 - Use present tense ("Add feature" not "Added feature")
 - Use imperative mood ("Move cursor to..." not "Moves cursor to...")
 - Reference issues when applicable
 
 Example:
-```
+
+```text
 Add FHIR R4 AllergyIntolerance resource schema
 
 - Add field definitions for AllergyIntolerance
@@ -324,7 +327,7 @@ Here are some areas where contributions are especially welcome:
 - Measure sharing capabilities
 - Additional export formats
 
-### Documentation
+### Docs and Guides
 
 - Tutorials and guides
 - API documentation
@@ -336,7 +339,7 @@ Here are some areas where contributions are especially welcome:
 If you have questions about contributing:
 
 1. Check the [FAQ](/faq) page
-2. Open a [Discussion](https://github.com/anthropics/s77/discussions)
+2. Open a [Discussion](https://github.com/FHIR-IQ/s77/discussions)
 3. Ask in an existing related issue
 
 Thank you for contributing to FHIR IQ CQL Builder!

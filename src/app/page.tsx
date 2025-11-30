@@ -49,7 +49,7 @@ function Header() {
             Vision
           </Link>
           <a
-            href="https://github.com/anthropics/s77"
+            href="https://github.com/FHIR-IQ/s77"
             target="_blank"
             rel="noopener noreferrer"
             className="text-muted-foreground hover:text-foreground transition-colors"
@@ -104,7 +104,7 @@ function Footer() {
               Roadmap
             </Link>
             <a
-              href="https://github.com/anthropics/s77/blob/main/CONTRIBUTING.md"
+              href="https://github.com/FHIR-IQ/s77/blob/main/CONTRIBUTING.md"
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-foreground"

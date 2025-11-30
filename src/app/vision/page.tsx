@@ -324,7 +324,7 @@ export default function VisionPage() {
                 </Button>
               </Link>
               <a
-                href="https://github.com/anthropics/s77"
+                href="https://github.com/FHIR-IQ/s77"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -500,7 +500,7 @@ export default function VisionPage() {
               </p>
               <div className="flex gap-4 justify-center">
                 <a
-                  href="https://github.com/anthropics/s77"
+                  href="https://github.com/FHIR-IQ/s77"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -510,7 +510,7 @@ export default function VisionPage() {
                   </Button>
                 </a>
                 <a
-                  href="https://github.com/anthropics/s77/blob/main/CONTRIBUTING.md"
+                  href="https://github.com/FHIR-IQ/s77/blob/main/CONTRIBUTING.md"
                   target="_blank"
                   rel="noopener noreferrer"
                 >

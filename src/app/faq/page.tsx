@@ -232,7 +232,7 @@ export default function FAQPage() {
                 </Button>
               </Link>
               <a
-                href="https://github.com/anthropics/s77"
+                href="https://github.com/FHIR-IQ/s77"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -327,7 +327,7 @@ export default function FAQPage() {
             </p>
             <div className="flex gap-3 justify-center">
               <a
-                href="https://github.com/anthropics/s77/issues/new"
+                href="https://github.com/FHIR-IQ/s77/issues/new"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -337,7 +337,7 @@ export default function FAQPage() {
                 </Button>
               </a>
               <a
-                href="https://github.com/anthropics/s77/blob/main/CONTRIBUTING.md"
+                href="https://github.com/FHIR-IQ/s77/blob/main/CONTRIBUTING.md"
                 target="_blank"
                 rel="noopener noreferrer"
               >
