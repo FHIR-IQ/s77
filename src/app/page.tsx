@@ -6,7 +6,7 @@ import { WelcomeScreen } from '@/components/cql-builder/welcome-screen';
 import { ConversationFlow } from '@/components/cql-builder/conversation-flow';
 import { CodeGenerator } from '@/components/cql-builder/code-generator';
 import { CodeReview } from '@/components/cql-builder/code-review';
-import { Github, Book, HelpCircle, Target } from 'lucide-react';
+import { Github, Book, HelpCircle, Target, Rocket } from 'lucide-react';
 import Link from 'next/link';
 
 function Header() {
@@ -47,6 +47,13 @@ function Header() {
           >
             <Target className="w-4 h-4" />
             Vision
+          </Link>
+          <Link
+            href="/coming-soon"
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+          >
+            <Rocket className="w-4 h-4" />
+            Coming Soon
           </Link>
           <a
             href="https://github.com/FHIR-IQ/s77"

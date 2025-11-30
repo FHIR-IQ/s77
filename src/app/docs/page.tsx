@@ -26,6 +26,7 @@ import {
   Users,
   Target,
   ArrowLeft,
+  Rocket,
 } from 'lucide-react';
 
 export default function DocsPage() {
@@ -69,6 +70,12 @@ export default function DocsPage() {
                 <Button variant="ghost" size="sm">
                   <Target className="w-4 h-4 mr-2" />
                   Vision
+                </Button>
+              </Link>
+              <Link href="/coming-soon">
+                <Button variant="ghost" size="sm">
+                  <Rocket className="w-4 h-4 mr-2" />
+                  Coming Soon
                 </Button>
               </Link>
               <a

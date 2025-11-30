@@ -29,6 +29,7 @@ import {
   Brain,
   BarChart3,
   Cloud,
+  Rocket,
 } from 'lucide-react';
 
 interface Milestone {
@@ -321,6 +322,12 @@ export default function VisionPage() {
                 <Button variant="ghost" size="sm">
                   <HelpCircle className="w-4 h-4 mr-2" />
                   FAQ
+                </Button>
+              </Link>
+              <Link href="/coming-soon">
+                <Button variant="ghost" size="sm">
+                  <Rocket className="w-4 h-4 mr-2" />
+                  Coming Soon
                 </Button>
               </Link>
               <a

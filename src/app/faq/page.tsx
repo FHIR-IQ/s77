@@ -21,6 +21,7 @@ import {
   Zap,
   FileJson,
   Shield,
+  Rocket,
 } from 'lucide-react';
 
 interface FAQItem {
@@ -229,6 +230,12 @@ export default function FAQPage() {
                 <Button variant="ghost" size="sm">
                   <Target className="w-4 h-4 mr-2" />
                   Vision
+                </Button>
+              </Link>
+              <Link href="/coming-soon">
+                <Button variant="ghost" size="sm">
+                  <Rocket className="w-4 h-4 mr-2" />
+                  Coming Soon
                 </Button>
               </Link>
               <a
