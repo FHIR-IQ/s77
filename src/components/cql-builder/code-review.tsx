@@ -44,6 +44,7 @@ import {
   downloadBundle,
   downloadMeasureBundle,
 } from '@/lib/export-service';
+import { PushToFhirButton } from '@/components/fhir-server';
 
 // Dynamically import Monaco to avoid SSR issues
 const MonacoWrapper = dynamic(
@@ -414,6 +415,20 @@ export function CodeReview() {
             <Package className="w-4 h-4 mr-2 text-emerald-600" />
             FHIR Bundle
           </Button>
+          <PushToFhirButton
+            cql={editorCode || generatedCQL.library}
+            elm={compilationResult?.elm || null}
+            options={{
+              libraryName: requirements.purpose
+                ? requirements.purpose.replace(/[^a-zA-Z0-9]/g, '').slice(0, 30)
+                : 'CQLMeasure',
+              libraryVersion: '1.0.0',
+              title: requirements.purpose,
+              description: requirements.problemStatement,
+              valueSets: requirements.valueSets?.map((vs) => ({ name: vs.name, oid: vs.oid })) || [],
+              scoringType: (requirements.scoringType as 'proportion' | 'ratio' | 'continuous-variable' | 'cohort') || 'proportion',
+            }}
+          />
           <Button variant="outline" size="sm" onClick={openInPlayground}>
             <ExternalLink className="w-4 h-4 mr-2" />
             Playground
