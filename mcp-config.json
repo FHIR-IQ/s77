@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "cql-builder": {
+      "command": "node",
+      "args": ["dist/mcp/server.js"],
+      "cwd": ".",
+      "env": {
+        "ANTHROPIC_API_KEY": "${ANTHROPIC_API_KEY}"
+      }
+    }
+  }
+}

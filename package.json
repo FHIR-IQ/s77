@@ -3,10 +3,15 @@
   "version": "1.0.0",
   "description": "Natural Language LLM-based CQL (Clinical Quality Language) Code Builder",
   "private": true,
+  "bin": {
+    "cql-builder-mcp": "./dist/mcp/server.js"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:mcp": "npx tsc -p src/mcp/tsconfig.json && node -e \"const fs=require('fs');const p='dist/mcp/package.json';fs.writeFileSync(p,JSON.stringify({type:'module'},null,2))\"",
     "start": "next start",
+    "start:mcp": "node dist/mcp/server.js",
     "lint": "next lint",
     "test": "jest",
     "cql:compile": "node scripts/compile-cql.js",
@@ -14,6 +19,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.30.0",
+    "@modelcontextprotocol/sdk": "^1.24.2",
     "@monaco-editor/react": "^4.7.0",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-dialog": "^1.1.1",
