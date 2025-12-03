@@ -16,6 +16,15 @@ import {
   Tool,
 } from '@modelcontextprotocol/sdk/types.js';
 import Anthropic from '@anthropic-ai/sdk';
+import { randomUUID } from 'crypto';
+
+/**
+ * Generate a UUID v4 for FHIR resource IDs
+ * Medplum and other FHIR servers require proper UUIDs
+ */
+function generateUUID(): string {
+  return randomUUID();
+}
 
 // Types
 interface MeasureRequirement {
@@ -301,10 +310,12 @@ function validateCQLStructure(cql: string): ValidationResult {
 function generateLibraryResource(cql: string, name: string, version: string): object {
   const sanitizedName = name.replace(/[^a-zA-Z0-9-]/g, '');
   const cqlBase64 = Buffer.from(cql).toString('base64');
+  // Generate UUID for the resource ID (required by Medplum and other FHIR servers)
+  const resourceId = generateUUID();
 
   return {
     resourceType: 'Library',
-    id: sanitizedName,
+    id: resourceId,
     meta: {
       profile: ['http://hl7.org/fhir/uv/cql/StructureDefinition/cql-library'],
     },
@@ -337,6 +348,8 @@ function generateLibraryResource(cql: string, name: string, version: string): ob
 
 function generateMeasureResource(libraryUrl: string, name: string, version: string, scoringType: string): object {
   const sanitizedName = name.replace(/[^a-zA-Z0-9-]/g, '');
+  // Generate UUID for the resource ID (required by Medplum and other FHIR servers)
+  const resourceId = generateUUID();
 
   const scoringDisplay: Record<string, string> = {
     proportion: 'Proportion',
@@ -347,7 +360,7 @@ function generateMeasureResource(libraryUrl: string, name: string, version: stri
 
   return {
     resourceType: 'Measure',
-    id: `${sanitizedName}Measure`,
+    id: resourceId,
     url: `http://example.org/fhir/Measure/${sanitizedName}Measure`,
     version,
     name: `${sanitizedName}Measure`,

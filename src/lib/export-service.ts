@@ -5,6 +5,23 @@
 
 import { saveAs } from 'file-saver';
 
+/**
+ * Generate a UUID v4 for FHIR resource IDs
+ * Medplum and other FHIR servers expect proper UUIDs
+ */
+function generateUUID(): string {
+  // Use crypto.randomUUID if available (browser and Node 19+)
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  // Fallback for older environments
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
 // FHIR Library resource structure
 export interface FhirLibrary {
   resourceType: 'Library';
@@ -122,10 +139,13 @@ export function generateLibraryResource(
   // Base64 encode the CQL content
   const cqlBase64 = btoa(unescape(encodeURIComponent(cql)));
 
+  // Generate UUID for the resource ID (required by Medplum and other FHIR servers)
+  const resourceId = generateUUID();
+
   // Build the Library resource
   const library: FhirLibrary = {
     resourceType: 'Library',
-    id: sanitizedName,
+    id: resourceId,
     meta: {
       profile: [
         'http://hl7.org/fhir/uv/cql/StructureDefinition/cql-library',
@@ -396,6 +416,9 @@ export function generateMeasureResource(
 
   const sanitizedName = libraryName.replace(/[^a-zA-Z0-9-]/g, '');
 
+  // Generate UUID for the resource ID (required by Medplum and other FHIR servers)
+  const resourceId = generateUUID();
+
   const scoringDisplay: Record<string, string> = {
     proportion: 'Proportion',
     ratio: 'Ratio',
@@ -405,7 +428,7 @@ export function generateMeasureResource(
 
   const measure: FhirMeasure = {
     resourceType: 'Measure',
-    id: `${sanitizedName}Measure`,
+    id: resourceId,
     url: `${baseUrl}/Measure/${sanitizedName}Measure`,
     version: libraryVersion,
     name: `${sanitizedName}Measure`,
