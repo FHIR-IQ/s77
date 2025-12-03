@@ -179,8 +179,8 @@ const TOOLS: Tool[] = [
         },
         authType: {
           type: 'string',
-          enum: ['none', 'basic', 'bearer'],
-          description: 'Authentication type for the FHIR server',
+          enum: ['none', 'basic', 'bearer', 'client-credentials'],
+          description: 'Authentication type for the FHIR server. Use client-credentials for Medplum OAuth2.',
         },
         username: {
           type: 'string',
@@ -193,6 +193,18 @@ const TOOLS: Tool[] = [
         accessToken: {
           type: 'string',
           description: 'Bearer token for authentication',
+        },
+        clientId: {
+          type: 'string',
+          description: 'Client ID for OAuth2 client-credentials flow (Medplum)',
+        },
+        clientSecret: {
+          type: 'string',
+          description: 'Client secret for OAuth2 client-credentials flow (Medplum)',
+        },
+        tokenUrl: {
+          type: 'string',
+          description: 'Token URL for OAuth2 (default: https://api.medplum.com/oauth2/token for Medplum)',
         },
         scoringType: {
           type: 'string',
@@ -500,32 +512,39 @@ async function handlePushToFhir(args: {
   libraryName: string;
   libraryVersion?: string;
   serverUrl: string;
-  authType?: 'none' | 'basic' | 'bearer';
+  authType?: 'none' | 'basic' | 'bearer' | 'client-credentials';
   username?: string;
   password?: string;
   accessToken?: string;
+  clientId?: string;
+  clientSecret?: string;
+  tokenUrl?: string;
   scoringType?: string;
-}): Promise<{ success: boolean; message: string; libraryUrl?: string; measureUrl?: string }> {
+}): Promise<{ success: boolean; message: string; libraryUrl?: string; measureUrl?: string; libraryId?: string; measureId?: string }> {
   const version = args.libraryVersion || '1.0.0';
   const scoringType = args.scoringType || 'proportion';
 
-  // Generate Library and Measure resources
+  // Generate Library and Measure resources (without ID - server will assign)
   const library = generateLibraryResource(args.cql, args.libraryName, version);
   const libraryUrl = `http://example.org/fhir/Library/${args.libraryName.replace(/[^a-zA-Z0-9-]/g, '')}`;
   const measure = generateMeasureResource(libraryUrl, args.libraryName, version, scoringType);
 
-  // Build auth headers
+  // Build auth headers (with OAuth2 support for Medplum)
+  const tokenUrl = args.tokenUrl || (args.serverUrl.includes('medplum') ? 'https://api.medplum.com/oauth2/token' : undefined);
   const headers = await buildAuthHeaders({
     baseUrl: args.serverUrl,
     authType: args.authType || 'none',
     username: args.username,
     password: args.password,
     accessToken: args.accessToken,
+    clientId: args.clientId,
+    clientSecret: args.clientSecret,
+    tokenUrl,
   });
 
-  // Upload Library
-  const libraryResponse = await fetch(`${args.serverUrl}/Library/${(library as { id: string }).id}`, {
-    method: 'PUT',
+  // Upload Library using POST (creates new resource)
+  const libraryResponse = await fetch(`${args.serverUrl}/Library`, {
+    method: 'POST',
     headers,
     body: JSON.stringify(library),
   });
@@ -538,9 +557,17 @@ async function handlePushToFhir(args: {
     };
   }
 
-  // Upload Measure
-  const measureResponse = await fetch(`${args.serverUrl}/Measure/${(measure as { id: string }).id}`, {
-    method: 'PUT',
+  // Get the server-assigned ID from the response
+  const libraryResult = await libraryResponse.json();
+  const libraryId = libraryResult.id;
+
+  // Update measure to reference the actual library URL on the server
+  const actualLibraryUrl = `${args.serverUrl}/Library/${libraryId}`;
+  (measure as { library: string[] }).library = [actualLibraryUrl];
+
+  // Upload Measure using POST (creates new resource)
+  const measureResponse = await fetch(`${args.serverUrl}/Measure`, {
+    method: 'POST',
     headers,
     body: JSON.stringify(measure),
   });
@@ -550,15 +577,21 @@ async function handlePushToFhir(args: {
     return {
       success: false,
       message: `Library uploaded but Measure failed: ${measureResponse.status} - ${errorText}`,
-      libraryUrl: `${args.serverUrl}/Library/${(library as { id: string }).id}`,
+      libraryUrl: actualLibraryUrl,
+      libraryId,
     };
   }
+
+  const measureResult = await measureResponse.json();
+  const measureId = measureResult.id;
 
   return {
     success: true,
     message: 'Library and Measure resources uploaded successfully',
-    libraryUrl: `${args.serverUrl}/Library/${(library as { id: string }).id}`,
-    measureUrl: `${args.serverUrl}/Measure/${(measure as { id: string }).id}`,
+    libraryUrl: actualLibraryUrl,
+    measureUrl: `${args.serverUrl}/Measure/${measureId}`,
+    libraryId,
+    measureId,
   };
 }
 
